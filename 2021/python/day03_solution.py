@@ -9,10 +9,7 @@ def exercise1():
     with open('./day03_input.txt') as f:
         l = f.read().splitlines()
 
-    count = []
-
-    for i in range(len(l[0])):
-        count.append(0)
+    count = [0] * len(l[0])
 
     for bin in l:
         for idx, val in enumerate(bin):
@@ -30,7 +27,6 @@ def exercise1():
 
     g = int(gb, 2)
     e = int(eb, 2)
-
 
     print(f'g * e = {g} * {e} = {g * e}')
 
