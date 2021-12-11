@@ -1,4 +1,6 @@
 # https://adventofcode.com/2021/day/10
+import math
+
 TEST: bool = False
 
 if TEST:
@@ -75,7 +77,7 @@ def exercise():
             score += AUTO_COMPLETE_SCORE_TABLE[OPEN_TO_CLOSE[char]]
         auto_complete_highscores.append(score)
 
-    idx: int = int((len(auto_complete_highscores) + 1) / 2) - 1
+    idx: int = math.floor(len(auto_complete_highscores)/ 2)
     auto_complete_highscore: int = sorted(auto_complete_highscores)[idx]
 
     print(f'Illegal character high score: {illegal_char_highscore}')
