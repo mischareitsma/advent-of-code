@@ -18,7 +18,6 @@ _lines: list[str] = None
 with open(INPUT_FILE, 'r') as f:
     _lines = [l.strip() for l in f.readlines()]
 
-
 pairs = {}
 # polymer: str = _lines[0]
 
@@ -122,8 +121,6 @@ def exercise2_old():
 
     totals = counter.most_common()
     print(f'After {STEPS}: {totals[0][1]} - {totals[-1][1]} = {totals[0][1]-totals[-1][1]}')
-
-
 
 def exercise2():
     STEPS: int = 40

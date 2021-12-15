@@ -30,8 +30,6 @@ def load_file():
         bingo_cards.append([])
         for j in range(5):
             bingo_cards[i].append([int(n) for n in lines[5 * i + j].split()])
-            
-    # print(bingo_cards)
 
 def mark_number(n):
     for card_number, card in enumerate(bingo_cards):
