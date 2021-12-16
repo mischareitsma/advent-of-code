@@ -1,5 +1,4 @@
 # https://adventofcode.com/2021/day/15
-import itertools
 import os
 file_path = os.path.abspath(os.path.dirname(__file__))
 
