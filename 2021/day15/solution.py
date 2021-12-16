@@ -4,7 +4,7 @@ file_path = os.path.abspath(os.path.dirname(__file__))
 
 import sys
 
-TEST: bool = False
+TEST: bool = True
 
 if TEST:
     INPUT_FILE: str = f'{file_path}/test_input.txt'
