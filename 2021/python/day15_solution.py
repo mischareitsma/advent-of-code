@@ -24,7 +24,6 @@ class Node:
         self.value = value # Value is the weight of the vertex
         self.distance: int = sys.maxsize # Total distance
         self.visited = False # Node in the graph is visited.
-        self.route = None # ??
 
 
 class Grid:
@@ -48,40 +47,24 @@ class Grid:
 
         final_node: Node = self.get_node(x_end, y_end)
 
-        # This list and looking up stuff might be extremely slow, how
-        # about a dict of (x, y): distance?
-        # Or how about making this list dynamically when routing, so
-        # just add the adjacent nodes of the current node if not visited,
-        # that way the current algorithm works, but doesn't have to
-        # traverse 500x500 nodes.
-        list_nodes = [n for r in self.nodes for n in r]
+        list_unvisited_nodes = [node]
 
-        while (not final_node.visited):
-            if not node:
+        while True:
+            if not node or final_node.visited:
                 break
-            print(f'Visiting node {node.x}, {node.y}')
-            for dx in [-1, 0, +1]:
-                for dy in [-1, 0, +1]:
-                    if (dx != 0 and dy != 0):
-                        # dx or dy needs to be zero
-                        continue
-                    if (dx == 0 and dy == 0):
-                        # my god, just refactor this bit, do for node in get_adj_nodes(node)
-                        continue
-                    #print(f'dx, dy = {dx}, {dy}')
-                    adjacent: Node = self.get_node(node.x + dx, node.y + dy)
-                    if not adjacent:
-                        continue
-                    #print(f'\tChecking adjacent {adjacent.x}, {adjacent.y}. Visisted / distance: {adjacent.visited}, {adjacent.distance}')
-                    if adjacent.visited:
-                        continue
-                    new_dist: int = node.distance + adjacent.value
-                    if new_dist < adjacent.distance:
-                        adjacent.distance = new_dist
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                adjacent: Node = self.get_node(node.x + dx, node.y + dy)
+                if not adjacent or adjacent.visited:
+                    continue
+                if not adjacent in list_unvisited_nodes:
+                    list_unvisited_nodes.append(adjacent)
+                new_dist: int = node.distance + adjacent.value
+                if new_dist < adjacent.distance:
+                    adjacent.distance = new_dist
             node.visited = True
-            list_nodes.remove(node)
+            list_unvisited_nodes.remove(node)
             node = None
-            for n in list_nodes:
+            for n in list_unvisited_nodes:
                 if not node and n.distance < sys.maxsize:
                     node = n
                     continue
@@ -108,8 +91,6 @@ def generate_expanded_map(og_map):
     Y = len(og_map)
 
     big_map = [[0] * (5*X) for _ in range(5*Y)]
-
-    # Fill in normal map + downwards
 
     for i in range(Y):
         for j in range(X):
@@ -147,3 +128,6 @@ if __name__ == "__main__":
     exercise2()
     for s in solutions:
         print(s)
+
+    if TEST:
+        print('Solutions should be 40 and 315')
