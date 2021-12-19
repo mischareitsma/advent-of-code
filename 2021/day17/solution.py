@@ -252,6 +252,14 @@ def test():
     print(len(list(max_height.keys())))
     # 380 is too low, 1892 is too low as well...
     # Right answer is 1928. Waaaaay to much bruteforcing
+    # TODO: One thing we know is that if y is positive, it'll come back through
+    # y = 0 with vy = -vy_init-1, which means we cannot go beyond vy_init = ymin,
+    # because it'll overshoot in the first step from 0, so we have an upperbound
+    # The lower bound we can find, because we have the solution for x, although
+    # that only holds for exercise 1. For exercise two we have the same
+    # upper bound for y, but we have a lower bound of vy_init = ymin, same
+    # reason, and only works for speeds of xmin<vx<xmax, where we are there
+    # in one step.
 
 
 if __name__ == "__main__":
