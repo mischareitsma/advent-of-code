@@ -9,17 +9,26 @@ class Vector:
     def distance(self, v: 'Vector') -> tuple[int]:
         return (abs(self.x - v.x), abs(self.y - v.y), abs(self.z - v.z))
 
-    def add(self, v: 'Vector') -> 'Vector':
-        return Vector(self.x + v.x, self.y + v.y, self.z + v.z)
+    def __mul__(self, i: int) -> 'Vector':
+        return Vector(self.x * i, self.y * i, self.z * i)
 
-    def subtract(self, v: 'Vector') -> 'Vector':
-        return Vector(self.x - v.x, self.y - v.y, self.z - v.z)
+    def __rmul__(self, i: int) -> 'Vector':
+        return Vector(self.x * i, self.y * i, self.z * i)
 
-    def __eq__(self, o: 'Vector'):
-        return self.x == o.x and self.y == o.y and self.z == o.z
+    def __add__(self, other: 'Vector') -> 'Vector':
+        return Vector(self.x + other.x, self.y + other.y, self.z + other.z)
 
-    def __ne__(self, o: 'Vector'):
-        return not self.__eq__(o)
+    def __sub__(self, other: 'Vector') -> 'Vector':
+        return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
+
+    def __neg__(self):
+        return -1 * self
+
+    def __eq__(self, other: 'Vector'):
+        return self.x == other.x and self.y == other.y and self.z == other.z
+
+    def __ne__(self, other: 'Vector'):
+        return not self.__eq__(other)
 
     def __getitem__(self, key):
         if key == 0:
@@ -40,6 +49,9 @@ class Vector:
             self.z = value
         else:
             raise IndexError(f'Vector index out of bounds: {key}')
+
+    def __hash__(self):
+        return hash((self.x, self.y, self.z))
 
 
 @dataclass
@@ -84,8 +96,6 @@ class Matrix3D:
 
     def __ne__(self, o: 'Matrix3D') -> bool:
         return not self.__eq__(o)
-
-transformation_matrices_3d = []
 
 mirror_x: Matrix3D = Matrix3D(
     [
