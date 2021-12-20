@@ -71,7 +71,7 @@ class Matrix3D:
         for i in range(3):
             result = 0
             for j in range(3):
-                result += self.m[i][j] * v[j]
+                result += (self.m[i][j] * v[j])
             new_v[i] = result
 
         return new_v
