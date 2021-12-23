@@ -19,9 +19,14 @@ def _print(msg):
 ROOMS_INIT: list[list[str]]
 
 if TEST:
-    HALL_INIT = ['.', '.', 'BA', '.', 'CD', '.', 'BC', '.', 'DA', '.', '.']
+    HALL_INIT = ('.', '.', 'BA', '.', 'CD', '.', 'BC', '.', 'DA', '.', '.')
+    HALL_INIT2 = ('.', '.', 'BDDA', '.', 'CCBD', '.', 'BBAC', '.', 'DACA', '.', '.')
 else:
-    HALL_INIT = ['.', '.', 'DD', '.', 'CA', '.', 'BA', '.', 'CB', '.', '.']
+    HALL_INIT = ('.', '.', 'DD', '.', 'CA', '.', 'BA', '.', 'CB', '.', '.')
+    HALL_INIT2 = ('.', '.', 'DD', '.', 'CA', '.', 'BA', '.', 'CB', '.', '.')
+
+  #D#C#B#A#
+  #D#B#A#C#
 
 HALL_LENGTH: int = len(HALL_INIT)
 
@@ -47,35 +52,14 @@ ROOM_SIZE = 2
 
 def is_solved(state: list[str]) -> bool:
     return (
-        state[2] == 'AA' and
-        state[4] == 'BB' and
-        state[6] == 'CC' and
-        state[8] == 'DD'
+        state[2] == ('A' * ROOM_SIZE) and
+        state[4] == ('B' * ROOM_SIZE) and
+        state[6] == ('C' * ROOM_SIZE) and
+        state[8] == ('D' * ROOM_SIZE)
     )
 
 def get_energy(amphipod: str, steps: int) -> int:
     return ENERGY[amphipod] * steps
-
-def is_movable(pos, pods) -> bool:
-    if pods == '.':
-        return False
-    # pos not a room, and the pods is not a ., so this one can move
-    if pos not in [2, 4, 6, 8]:
-        return True
-
-    # if we are here, the pods is not a dot, and we are in a room
-    if pos == 2 and (pods != 'AA' or pods != 'A'):
-        return 
-
-    if pos == 4 and (pods != 'BB' or pods != 'B'):
-        return True
-
-    if pos == 6 and (pods != 'CC' or pods != 'C'):
-        return True
-
-    if pos == 8 and (pods != 'DD' or pods != 'D'):
-        return True
-
 
 def can_reach_room(state, pos, pod):
     room_pos = ROOM[pod]
@@ -90,7 +74,7 @@ def can_reach_room(state, pos, pod):
             return False
     return True
 
-def get_amphipods(state):
+def get_amphipods(state: set):
     amphipods = []
 
     for pos, pod in enumerate(state):
@@ -114,7 +98,7 @@ def get_amphipods(state):
 
     return amphipods
 
-def get_new_states(state, pod, pos) -> list[tuple[list, int]]:
+def get_new_states(state: set, pod: str, pos: int) -> list[tuple[tuple, int]]:
     """Get new states, returns a list of tuples, which have the
     new state (as a list) and the energy it took to get to there.
     """
@@ -149,25 +133,32 @@ def get_new_states(state, pod, pos) -> list[tuple[list, int]]:
             if state[i] != '.':
                 return []
 
-        new_state = state[::]
+        new_state = list(state[::])
         new_state[pos] = '.'
-        # Was empty, extra step needed
-        if new_state[room_number] == '.':
-            e += ENERGY[pod]
-            new_state[room_number] = pod
-        # Was not empty
-        else:
-            new_state[room_number] += pod
 
-        return [(new_state, e)]
+        if new_state[room_number] == '.':
+            new_state[room_number] = ''
+        
+        e += (ROOM_SIZE - len(new_state[room_number]))
+        new_state[room_number] += pod
+        # REWRITE TO TAKE INTO CONSIDERATION ROOM_SIZE
+        # Was empty, extra step needed
+        # if new_state[room_number] == '.':
+        #     e += (ENERGY[pod] * 2)
+        #     new_state[room_number] = pod
+        # # Was not empty
+        # else:
+        #     e += ENERGY[pod]
+        #     new_state[room_number] += pod
+
+        return [(tuple(new_state), e)]
 
     new_states = []
     # Stepping out of the room energy
-    init_energy = ENERGY[pod]
-    new_room_content = state[pos][-1]
-    if len(state[pos]) == 1:
+    init_energy = ENERGY[pod] * ((ROOM_SIZE + 1) - len(state[pos]))
+    new_room_content = state[pos][1:]
+    if len(state[pos]) == 0:
         # Room now empty, extra step + now empty
-        init_energy += ENERGY[pod]
         new_room_content = '.'
 
     # _print(f'Starting energy: {init_energy}, new room content: {new_room_content}')
@@ -181,10 +172,10 @@ def get_new_states(state, pod, pos) -> list[tuple[list, int]]:
         # passing a room, cannot stop here
         if i in ROOMS:
             continue
-        new_state = state[::]
+        new_state = list(state[::])
         new_state[i] = pod
         new_state[pos] = new_room_content
-        new_states.append((new_state, e))
+        new_states.append((tuple(new_state), e))
 
     e = init_energy
     for i in range(pos + 1, HALL_LENGTH):
@@ -195,23 +186,23 @@ def get_new_states(state, pod, pos) -> list[tuple[list, int]]:
         # passing a room, cannot stop here
         if i in ROOMS:
             continue
-        new_state = state[::]
+        new_state = list(state[::])
         new_state[i] = pod
         new_state[pos] = new_room_content
-        new_states.append((new_state, e))
+        new_states.append((tuple(new_state), e))
 
     return new_states
 
 def invalid_state(state):
     s = ''.join(state)
-    return sum([s.count(c) for c in 'ABCD']) != 8
+    return sum([s.count(c) for c in 'ABCD']) != (4 * ROOM_SIZE)
 
-def solve(state, energy, depth=0) -> list[int]:
+@cache
+def solve(state: tuple[str], energy: int) -> list[int]:
+# def solve(state, energy) -> list[tuple[list, int]]:
     energies = []
 
-    _print(f'Solving for {state} with energy {energy}, depth: {depth}')
-
-    depth += 1
+    _print(f'Solving for {state} with energy {energy}')
 
     # Catching weird states here
     if invalid_state(state):
@@ -221,6 +212,7 @@ def solve(state, energy, depth=0) -> list[int]:
 
     if is_solved(state):
         return [energy]
+        # return [([(state, energy)], energy)]
 
     # This while used to be here, but we have recurions in the moves, so no need???
     # # Solve for a particular state
@@ -237,16 +229,38 @@ def solve(state, energy, depth=0) -> list[int]:
             _print(f'\tNew state {i} with energy {e}: {s}')
         # _print(f'New states: {new_states}')
         for s, e in new_states:
-            energies += solve(s, energy + e, depth)
+            # new_energies = solve(s, energy + e)
+            # for i in new_energies:
+            #     i[0].insert(0, (state, energy))
+            #     energies.append(i)
+            energies += solve(s, energy + e)
 
     return energies
 
 def exercise1():
     energies = solve(HALL_INIT, 0)
+    # min_energy = sys.maxsize
+    # states = None
+    # # with open('check_output.txt', 'w') as f:
+    # for i in energies:
+    #     if i[1] < min_energy:
+    #         min_energy = i[1]
+    #         states = i[0]
+    # #         f.write(f'Energy level: {i[1]}')
+    # #         for istate, state in enumerate(i[0]):
+    # #             f.write(f'Step {istate}: {state}')
+
+    # for state, energy in states:
+    #     print(f'{state} - {energy}')
+
+    # return min_energy
     return min(energies)
 
 def exercise2():
-    pass
+    global ROOM_SIZE
+    ROOM_SIZE = 4
+    energies = solve(HALL_INIT2, 0)
+    return min(energies)
 
 if __name__ == "__main__":
     e1 = exercise1()
