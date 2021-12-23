@@ -23,6 +23,19 @@ def find_mergable_cuboids(cuboids: list['Cuboid']) -> tuple:
 
     return None, None, None
 
+def get_non_overlapping_range(i, f, oi, of) -> list[tuple[int]]:
+    """Get a non overlapping range between the init and final (i, f),
+    and the other or overlapping init and final (oi, of).
+    """
+    ranges = []
+
+    if (oi > i):
+        ranges.append((i, oi - 1))
+    if (of < f):
+        ranges.append((of + 1, f))
+
+    return ranges
+
 
 def reduce_cuboid_list(cuboids: list['Cuboid']):
     """Reduce the amount of cuboids in the list by merging those that
@@ -65,7 +78,11 @@ class Cuboid:
     zf: int
 
     def contains(self, other: 'Cuboid') -> bool:
-        return False
+        return (
+            self.xi <= other.xi and self.xf >= other.xf and
+            self.yi <= other.yi and self.yf >= other.yf and
+            self.zi <= other.zi and self.zf >= other.zf
+        )
 
     def split_if_overlap(self, other: 'Cuboid') -> tuple[list['Cuboid'], bool]:
         """Split the cuboid if there is overlap with an incoming cuboid.
@@ -76,6 +93,7 @@ class Cuboid:
         """
 
         # TODO could also return [] if contains and [self] if no overlap
+
         if other.contains(self):
             return [], True
 
@@ -84,21 +102,53 @@ class Cuboid:
         if not oc:
             return [], False
 
+        split_cuboids: list['Cuboid'] = []
+
         # Returns depend on the type of overlap: corner chipped off, a resulting
         # 'stair' or a 'plane'
         # Even more complex, can also chip from the middle, or cut in half
 
-        # Returning 3 cuboids:
-        # 1 original xrange, z range, trimmed y range
-        # 2 original xrange, trimmed z range, overlapping y range
-        # 3 trimmed xrange, overlapping z and y range
-        trim_xi ,trim_xf = self.get_trimmed_range(self.xi, self.xf, other.xi, other.xf)
-        trim_yi, trim_yf = self.get_trimmed_range(self.yi, self.yf, other.yi, other.yf)
-        trim_zi, trim_zf = self.get_trimmed_range(self.zi, self.zf, other.zi, other.zf)
+        # Following can be less loops probably, but this is how I drew it on
+        # paper :-)
+
+        non_overlap_x = get_non_overlapping_range(self.xi, self.xf, oc.xi, oc.xf)
+        non_overlap_y = get_non_overlapping_range(self.yi, self.yf, oc.yi, oc.yf)
+        non_overlap_z = get_non_overlapping_range(self.zi, self.zf, oc.zi, oc.zf)
+
+        # All non-overlapping corners, total of 2*2*2 = 8
+        for xr in non_overlap_x:
+            for yr in non_overlap_y:
+                for zr in non_overlap_z:
+                    split_cuboids.append(Cuboid(xr[0], xr[1], yr[0], yr[1], zr[0], zr[1]))
+
+        # All non-overlap in two sides, and overalp in one, total of 3 * (2 * 2) = 3 * 4 = 12
+        for xr in non_overlap_x:
+            for yr in non_overlap_y:
+                split_cuboids.append(Cuboid(xr[0], xr[1], yr[0], yr[1], oc.zi, oc.zf))
+
+        for xr in non_overlap_x:
+            for zr in non_overlap_z:
+                split_cuboids.append(Cuboid(xr[0], xr[1], oc.yi, oc.yf, zr[0], zr[1]))
 
 
+        for yr in non_overlap_y:
+            for zr in non_overlap_z:
+                split_cuboids.append(Cuboid(oc.xi, oc.xf, yr[0], yr[1], zr[0], zr[1]))
 
-        return reduce_cuboid_list(spit_cuboids), True
+        # All non-overlap in one side, and overalp in one, total of 3 * 2 = 6
+        for xr in non_overlap_x:
+            split_cuboids.append(Cuboid(xr[0], xr[1], oc.yi, oc.yf, oc.zi, oc.zf))
+
+        for yr in non_overlap_y:
+            split_cuboids.append(Cuboid(oc.xi, oc.xf, yr[0], yr[1], oc.zi, oc.zf))
+
+        for zr in non_overlap_z:
+            split_cuboids.append(Cuboid(oc.xi, oc.xf, oc.yi, oc.yf, zr[0], zr[1]))
+
+        # Now we have a max of 8 + 12 + 6 = 26 new cubes, which is in line with the 3*3*3 = 27 - 1
+        
+        reduce_cuboid_list(split_cuboids)
+        return split_cuboids, True
 
     def get_overlap_range(self, i, f, oi, of) -> tuple:
         """Get overlap in two ranges.
@@ -139,6 +189,9 @@ class Cuboid:
         for c in others:
             oc = self.get_overlap_cuboid(c)
             if oc:
-                overlap += ((oc.xf + 1) - oc.xi) * ((oc.yf + 1) - oc.yi) * ((oc.zf + 1) - oc.zi)
+                overlap += oc.size()
 
         return overlap
+
+    def size(self):
+        return ((self.xf + 1) - self.xi) * ((self.yf + 1) - self.yi) * ((self.zf + 1) - self.zi)

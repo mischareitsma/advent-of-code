@@ -4,10 +4,10 @@ file_path = os.path.abspath(os.path.dirname(__file__))
 
 import sys
 
-from cuboid import Cuboid
+from cuboid import Cuboid, reduce_cuboid_list
 
-TEST_N: int = 1
-TEST: bool = True
+TEST_N: int = 3
+TEST: bool = False
 VERBOSE: bool = False
 
 MIN: int = -50
@@ -25,7 +25,6 @@ else:
 _lines: str = ''
 with open(INPUT_FILE, 'r') as f:
     _lines = [line.strip() for line in f.readlines()]
-
 
 data = []
 for line in _lines:
@@ -67,7 +66,6 @@ def og_exercise1():
         for x in range(xi, xf + 1):
             for y in range(yi, yf + 1):
                 for z in range(zi, zf + 1):
-                    _print(f'Turning {x}, {y}, {z} to {state}')
                     cubes[(x, y, z)] = state
 
     return get_state_on(cubes)
@@ -77,32 +75,38 @@ def exercise1():
     active_cuboids: list[Cuboid] = []
     for cuboid, state in data:
         new_active_cuboids: list[Cuboid] = []
+        new_cuboid_is_contained = False
 
         for active_cuboid in active_cuboids:
+            # For a cuboid that is contained, and we need to add stuff, do nothing
+            if active_cuboid.contains(cuboid) and state == 1:
+                new_cuboid_is_contained = True
+                break
             split_cuboids, has_split = active_cuboid.split_if_overlap(cuboid)
             if has_split and split_cuboids:
                 new_active_cuboids += split_cuboids
             if not has_split:
                 new_active_cuboids.append(active_cuboid)
+
+        # If we had a contained cuboid, we do nothing
+        if new_cuboid_is_contained:
+            continue
         # Finally, append own if state is 1:
         if state == 1:
             new_active_cuboids.append(cuboid)
         active_cuboids = new_active_cuboids
 
-    for c in active_cuboids:
-        print(c)
+    return active_cuboids
 
-    return Cuboid(-50, 50, -50, 50, -50, 50).count_overlap(active_cuboids)
-
-def exercise2():
+def exercise2(ac: list[Cuboid]):
     if TEST and TEST_N != 3:
-        return
-    pass
+        return -1
+    return sum([c.size() for c in ac])
 
 
 if __name__ == "__main__":
-    e1 = exercise1()
-    e2 = exercise2()
+    ac = exercise1()
+    e2 = exercise2(ac)
 
     SOLUTION_PART_1 = {
         1: 39,
@@ -110,8 +114,8 @@ if __name__ == "__main__":
         3: 474140,
     }
 
-    if e1:
-        print(f'Solution exercise 1: {e1}')
+    if ac:
+        print(f'Solution exercise 1: {Cuboid(-50, 50, -50, 50, -50, 50).count_overlap(ac)}')
     if TEST:
          print(f'Solution example exercise 1: {SOLUTION_PART_1[TEST_N]}')
     if e2:
