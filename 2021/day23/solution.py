@@ -3,7 +3,7 @@ from functools import cache
 import os
 file_path = os.path.abspath(os.path.dirname(__file__))
 import sys
-TEST: bool = True
+TEST: bool = False
 VERBOSE: bool = False
 
 # count = 0
@@ -23,7 +23,7 @@ if TEST:
     HALL_INIT2 = ('.', '.', 'BDDA', '.', 'CCBD', '.', 'BBAC', '.', 'DACA', '.', '.')
 else:
     HALL_INIT = ('.', '.', 'DD', '.', 'CA', '.', 'BA', '.', 'CB', '.', '.')
-    HALL_INIT2 = ('.', '.', 'DD', '.', 'CA', '.', 'BA', '.', 'CB', '.', '.')
+    HALL_INIT2 = ('.', '.', 'DDDD', '.', 'CCBA', '.', 'BBAA', '.', 'CACB', '.', '.')
 
   #D#C#B#A#
   #D#B#A#C#
@@ -78,16 +78,17 @@ def get_amphipods(state: set):
     amphipods = []
 
     for pos, pod in enumerate(state):
+        _print(f'Check if can use pod {pod} at pos {pos}')
         if pod == '.':
             continue
-        
+
         # rooms are special:
         if pos in ROOMS:
             room_owner = PODS[pos]
-            # Room is done
+            # Room only has own occupants, no need to leave
             if pod.count(room_owner) == len(pod):
                 continue
-            
+
             # Can only move if either side is empty
             if state[pos-1] == '.' or state[pos+1] == '.':
                 amphipods.append((pos, pod[0]))
@@ -117,13 +118,12 @@ def get_new_states(state: set, pod: str, pos: int) -> list[tuple[tuple, int]]:
         _print(f'Trying to get to room {room_number}, state of that room: {state[room_number]}')
 
         # if room is occupied with another, cannot move
-        if state[room_number] not in ['.', pod]:
+        if (state[room_number] != '.') and (state[room_number].count(pod) != len(state[room_number])):
+        # if state[room_number] not in ['.', pod]:
             return []
 
-        step = 1
-        if room_number < pos:
-            step = -1
-
+        step = 1 if room_number > pos else -1
+        
         _print(f'start, end and step for range: {pos}, {room_number + step}, {step}')
 
         for i in range(pos + step, room_number + step, step):
@@ -133,13 +133,13 @@ def get_new_states(state: set, pod: str, pos: int) -> list[tuple[tuple, int]]:
             if state[i] != '.':
                 return []
 
-        new_state = list(state[::])
+        new_state = list(state)
         new_state[pos] = '.'
 
         if new_state[room_number] == '.':
             new_state[room_number] = ''
         
-        e += (ROOM_SIZE - len(new_state[room_number]))
+        e += ((ROOM_SIZE - len(new_state[room_number])) * ENERGY[pod])
         new_state[room_number] += pod
         # REWRITE TO TAKE INTO CONSIDERATION ROOM_SIZE
         # Was empty, extra step needed
@@ -157,7 +157,7 @@ def get_new_states(state: set, pod: str, pos: int) -> list[tuple[tuple, int]]:
     # Stepping out of the room energy
     init_energy = ENERGY[pod] * ((ROOM_SIZE + 1) - len(state[pos]))
     new_room_content = state[pos][1:]
-    if len(state[pos]) == 0:
+    if len(new_room_content) == 0:
         # Room now empty, extra step + now empty
         new_room_content = '.'
 
@@ -172,7 +172,7 @@ def get_new_states(state: set, pod: str, pos: int) -> list[tuple[tuple, int]]:
         # passing a room, cannot stop here
         if i in ROOMS:
             continue
-        new_state = list(state[::])
+        new_state = list(state)
         new_state[i] = pod
         new_state[pos] = new_room_content
         new_states.append((tuple(new_state), e))
@@ -186,7 +186,7 @@ def get_new_states(state: set, pod: str, pos: int) -> list[tuple[tuple, int]]:
         # passing a room, cannot stop here
         if i in ROOMS:
             continue
-        new_state = list(state[::])
+        new_state = list(state)
         new_state[i] = pod
         new_state[pos] = new_room_content
         new_states.append((tuple(new_state), e))
@@ -273,4 +273,4 @@ if __name__ == "__main__":
     if e2:
         print(f'Solution exercise 2: {e2}')
     if TEST:
-        print('Solution example exercise 2: ...')
+        print('Solution example exercise 2: 44169')
