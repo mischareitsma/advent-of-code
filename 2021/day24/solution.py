@@ -1,3 +1,4 @@
+# https://adventofcode.com/2021/day/24
 from collections.abc import Iterable
 
 """

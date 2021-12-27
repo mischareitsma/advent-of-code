@@ -1,4 +1,4 @@
-# https://adventofcode.com/2021/day/22
+# https://adventofcode.com/2021/day/23
 from functools import cache
 import os
 file_path = os.path.abspath(os.path.dirname(__file__))
