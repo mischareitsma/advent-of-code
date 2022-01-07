@@ -8,14 +8,14 @@ from dataclasses import dataclass
 import collections
 import sys
 
-TEST: bool = False
+TEST: bool = True
 VERBOSE: bool = True
 DEBUG: bool = False
 
 if TEST:
-    INPUT_FILE: str = f'{file_path}/test_input.txt'
+    INPUT_FILE: str = f'{file_path}/test_input.dat'
 else:
-    INPUT_FILE: str = f'{file_path}/input.txt'
+    INPUT_FILE: str = f'{file_path}/input.dat'
 
 def _print(msg: str):
     if VERBOSE:

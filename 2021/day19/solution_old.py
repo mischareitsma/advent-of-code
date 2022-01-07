@@ -14,9 +14,9 @@ VERBOSE: bool = False
 START_POS = 0
 
 if TEST:
-    INPUT_FILE: str = f'{file_path}/test_input.txt'
+    INPUT_FILE: str = f'{file_path}/test_input.dat'
 else:
-    INPUT_FILE: str = f'{file_path}/input.txt'
+    INPUT_FILE: str = f'{file_path}/input.dat'
 
 _lines: list[str] = ''
 

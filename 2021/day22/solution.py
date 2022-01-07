@@ -18,9 +18,9 @@ def _print(msg):
         print(msg)
 
 if TEST:
-    INPUT_FILE: str = f'{file_path}/test_input{TEST_N}.txt'
+    INPUT_FILE: str = f'{file_path}/test_input{TEST_N}.dat'
 else:
-    INPUT_FILE: str = f'{file_path}/input.txt'
+    INPUT_FILE: str = f'{file_path}/input.dat'
 
 _lines: str = ''
 with open(INPUT_FILE, 'r') as f:

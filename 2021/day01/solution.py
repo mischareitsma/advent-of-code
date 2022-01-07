@@ -7,7 +7,7 @@ def load_data():
 
     global m
     m = []
-    with open('input.txt', 'r') as f:
+    with open('input.dat', 'r') as f:
         m = [int(i.strip()) for i in f.readlines()]
 
     # Making sliding window list

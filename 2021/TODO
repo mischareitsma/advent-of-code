@@ -1,2 +1,8 @@
+day7:
+	[ ] Solution is not good, have some idea about the area of the solution, so just print around a guess, not good!
+day13:
+	[ ] Translate A-Z 6x5 displays to A-Z chars.
+day17:
+	[ ] Solution is crap, lots of brute forcing, reconsider
 day19:
 	[ ] The `for s in scanners:`, just complete the for loop in the while look, start at beginning again after a full loop

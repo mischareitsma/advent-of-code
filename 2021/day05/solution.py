@@ -4,9 +4,9 @@ from dataclasses import dataclass
 TEST: bool = False
 
 if TEST:
-    INPUT_FILE: str = './test_input.txt'
+    INPUT_FILE: str = './test_input.dat'
 else:
-    INPUT_FILE: str = './input.txt'
+    INPUT_FILE: str = './input.dat'
 
 xmax = 0
 ymax = 0

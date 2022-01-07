@@ -8,7 +8,7 @@ TEST_NUMBER: int = 3
 BITS_MESSAGE: str = ''
 
 if not TEST:
-    INPUT_FILE: str = f'{file_path}/input.txt'
+    INPUT_FILE: str = f'{file_path}/input.dat'
     with open(INPUT_FILE, 'r') as f:
         BITS_MESSAGE = f.readline().strip()
 
@@ -134,13 +134,13 @@ def exercise():
 if __name__ == "__main__":
     if TEST:
         print('Exercise 1 test:')
-        with open('test_part1.txt') as f:
+        with open('test_part1.dat') as f:
             for _in in [l.strip() for l in f.readlines()]:
                 m = Message(_in, False)
                 m.parse()
                 print(f'Input message: {_in}, sum of versions: {sum_versions(m)}')
         print('Exercise 2 test:')
-        with open('test_part2.txt') as f:
+        with open('test_part2.dat') as f:
             for _in in [l.strip() for l in f.readlines()]:
                 m = Message(_in, False)
                 m.parse()

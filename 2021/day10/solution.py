@@ -4,10 +4,10 @@ import math
 TEST: bool = False
 
 if TEST:
-    INPUT_FILE: str = './test_input.txt'
+    INPUT_FILE: str = './test_input.dat'
 
 else:
-    INPUT_FILE: str = './input.txt'
+    INPUT_FILE: str = './input.dat'
 
 lines: list[str] = None
 

@@ -4,10 +4,10 @@
 
 #if 1
 #define SIZE 10
-#define INPUT "test_input.txt"
+#define INPUT "test_input.dat"
 #else
 #define SIZE 100
-#define INPUT "input.txt"
+#define INPUT "input.dat"
 #endif
 
 #define MULTIPLIER 5

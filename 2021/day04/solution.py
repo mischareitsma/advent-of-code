@@ -1,6 +1,6 @@
 # https://adventofcode.com/2021/day/4
 import sys
-input_file: str = './input.txt'
+input_file: str = './input.dat'
 
 bingo_numbers = []
 bingo_cards = []

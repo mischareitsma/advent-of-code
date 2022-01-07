@@ -13,9 +13,9 @@ TEST_PATHTS = {
 }
 
 if TEST:
-    INPUT_FILE: str = f'{file_path}/test_input{TEST_NUMBER}.txt'
+    INPUT_FILE: str = f'{file_path}/test_input{TEST_NUMBER}.dat'
 else:
-    INPUT_FILE: str = f'{file_path}/input.txt'
+    INPUT_FILE: str = f'{file_path}/input.dat'
 
 _lines: list[str] = None
 

@@ -1,4 +1,4 @@
-# https://adventofcode.com/2021/day/20
+# https://adventofcode.com/2021/day/21
 import os
 file_path = os.path.abspath(os.path.dirname(__file__))
 
@@ -14,9 +14,9 @@ def _print(msg):
         print(msg)
 
 if TEST:
-    INPUT_FILE: str = f'{file_path}/test_input.txt'
+    INPUT_FILE: str = f'{file_path}/test_input.dat'
 else:
-    INPUT_FILE: str = f'{file_path}/input.txt'
+    INPUT_FILE: str = f'{file_path}/input.dat'
 
 _lines: str = ''
 with open(INPUT_FILE, 'r') as f:

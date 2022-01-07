@@ -3,7 +3,7 @@ def exercise1():
     depth = 0
     x = 0
 
-    with open('./input.txt', 'r') as f:
+    with open('./input.dat', 'r') as f:
         for l in f:
             direction, delta = l.strip().split()
             delta = int(delta)
@@ -23,7 +23,7 @@ def exercise2():
     depth = 0
     x = 0
     aim = 0
-    with open('./input.txt', 'r') as f:
+    with open('./input.dat', 'r') as f:
         for l in f:
             direction, delta = l.strip().split()
             delta = int(delta)

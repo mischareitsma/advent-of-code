@@ -9,9 +9,9 @@ TEST: bool = False
 DEBUG: bool = False
 
 if TEST:
-    INPUT_FILE: str = f'{file_path}/test_input.txt'
+    INPUT_FILE: str = f'{file_path}/test_input.dat'
 else:
-    INPUT_FILE: str = f'{file_path}/input.txt'
+    INPUT_FILE: str = f'{file_path}/input.dat'
 
 _lines: list[str] = None
 

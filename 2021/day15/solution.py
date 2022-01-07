@@ -7,9 +7,9 @@ import sys
 TEST: bool = True
 
 if TEST:
-    INPUT_FILE: str = f'{file_path}/test_input.txt'
+    INPUT_FILE: str = f'{file_path}/test_input.dat'
 else:
-    INPUT_FILE: str = f'{file_path}/input.txt'
+    INPUT_FILE: str = f'{file_path}/input.dat'
 
 _grid: list[list[int]] = None
 

@@ -6,7 +6,7 @@ def exercise1():
 
     l = []
 
-    with open('./input.txt') as f:
+    with open('./input.dat') as f:
         l = f.read().splitlines()
 
     count = [0] * len(l[0])
@@ -67,7 +67,7 @@ def prune(l, idx, val):
 
 def exercise2():
 
-    with open('./input.txt') as f:
+    with open('./input.dat') as f:
         l = f.read().splitlines()
 
     o2 = l[::]
