@@ -4,5 +4,7 @@ a.out
 __pycache__/
 *.pyc
 
+venv/
+
 # Ignore all AoC inputs
 *.dat
