@@ -1,3 +1,6 @@
+import argparse
+import aoc
+
 def p1():
     print('d1.p1')
 
@@ -10,5 +13,14 @@ def main():
     p1()
     p2()
 
+
+def run():
+    pass
+
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    aoc.add_generic_options(parser)
+
+    opts = parser.parse_args()
+
+    
