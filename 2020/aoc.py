@@ -24,8 +24,7 @@ def print_unsupported_combo(opt1: str, opt2: str):
 
 
 class Day:
-    
-
+    pass
 
 def run_day(i:int):
     getattr(days[i], 'main')()
