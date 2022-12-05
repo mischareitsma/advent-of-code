@@ -12,11 +12,14 @@ else:
 with open(INPUT_FILE, 'r') as f:
     LINES = [l.strip() for l in f.readlines()]
 
+
 def is_contained(min1, max1, min2, max2):
     return (min1 <= min2 and max1 >= max2)
 
+
 def has_overlap(min1, max1, min2, max2):
     return len(set(range(min1, max1 + 1)).intersection(range(min2, max2 + 1))) > 0
+
 
 def main():
     c = 0
@@ -31,6 +34,7 @@ def main():
     
     print(f'Number of contained elves: {c}')
     print(f'Number of overlap pairs: {o}')
+
 
 if __name__ == "__main__":
     main()
