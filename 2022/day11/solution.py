@@ -2,7 +2,7 @@
 import os
 file_path = os.path.abspath(os.path.dirname(__file__))
 
-TEST: bool = True
+TEST: bool = False
 
 if TEST:
     INPUT_FILE: str = f'{file_path}/test_input.dat'
@@ -25,6 +25,7 @@ class Monkey:
         self.targets: tuple[int] = None
         self.monkeys: list['Monkey'] = None
         self.apply_worry: bool = False
+        self.product_all_divisors = 1
 
     def set_op_val(self, val):
         self.op_val = val
@@ -53,6 +54,8 @@ class Monkey:
 
         if self.apply_worry:
             item = item // 3
+        else:
+            item = item % self.product_all_divisors
 
         return item
 
@@ -89,9 +92,14 @@ def part1():
 
 def part2():
     monkeys = get_monkeys(False)
+    p = 1
+    for m in monkeys:
+        p *= m.divisible
+    
+    for m in monkeys:
+        m.product_all_divisors = p
+
     for i in range(10000):
-        if (i % 100 == 0):
-            print(i)
         for m in monkeys:
             m.inspect()
     
