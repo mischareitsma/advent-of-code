@@ -5,13 +5,15 @@ file_path = os.path.abspath(os.path.dirname(__file__))
 
 from enum import Enum
 
-TEST: bool = True
+TEST: bool = False
+VERBOSE: bool = True
 
 PART1_Y: int = 10 if TEST else 2000000
 XMIN: int = 0
 YMIN: int = 0
 XMAX: int = 20 if TEST else 4000000
 YMAX: int = 20 if TEST else 4000000
+FREQ_MULTIPLIER: int = 4000000
 
 if TEST:
     INPUT_FILE: str = f'{file_path}/test_input.dat'
@@ -60,9 +62,37 @@ class Range:
         self.xmin = xmin
         self.xmax = xmax
 
-    def has_overlap(self, other: 'Range'):
+    def merge(self, other: 'Range') -> bool:
+        if not self.can_merge(other):
+            return False
+        
+        self.xmin = min(self.xmin, other.xmin)
+        self.xmax = max(self.xmax, other.xmax)
+
+        return True
+
+    def can_merge(self, other: 'Range') -> bool:
+        # Merge / absorb if there is overlap, they touch, or one is
+        # contained in the other.
+        return self.is_contained(other) or other.is_contained(self) or \
+            self.is_touching(other) or self.is_overlapping(other)
+    
+    def is_contained(self, other: 'Range') -> bool:
+        return (other.xmin <= self.xmin <= other.xmax) and \
+            (other.xmin <= self.xmax <= other.xmax)
+    
+    def is_touching(self, other: 'Range') -> bool:
+        return ((other.xmin - 1) == self.xmax) or ((self.xmin - 1) == other.xmax)
+    
+    def is_overlapping(self, other: 'Range') -> bool:
         return (other.xmin <= self.xmin <= other.xmax) or \
-               (other.xmin <= self.xmax <= other.xmax)
+            (other.xmin <= self.xmax <= other.xmax) or \
+            (self.xmin <= other.xmin <= self.xmax) or \
+            (self.xmin <= other.xmax <= self.xmax)
+
+    def has_overlap(self, other: 'Range'):
+        return (other.xmin <= self.xmin <= other.xmax) or (other.xmin <= self.xmax <= other.xmax)
+            
 
     def get_merger(self, other: 'Range'):
         if not self.has_overlap(other):
@@ -92,8 +122,33 @@ class ScanRange:
                     r = r.get_merger(r2)
                     m.append(j)
             l.append(r)
-        self.ranges = r
+        self.ranges = l
 
+    def combine_ranges(self):
+
+        can_combine: bool = True
+        idx = 0
+        
+        while can_combine and (len(self.ranges) > 1):
+            overlap_indices = []
+
+            for i, ir in enumerate(self.ranges):
+                if i <= idx:
+                    continue
+                if self.ranges[idx].merge(ir):
+                    overlap_indices.append(i)
+            
+            for i in reversed(overlap_indices):
+                self.ranges.pop(i)
+
+            if (len(overlap_indices) == 0) and (idx + 1 < len(self.ranges)):
+                idx += 1
+                continue
+            
+            can_combine = (len(overlap_indices) > 0)
+        
+        # Sort them as well
+        self.ranges.sort(key=lambda r: r.xmin)
 
 
 class Beacon:
@@ -115,6 +170,22 @@ class Sensor:
     def __eq__(self, other: 'Sensor'):
         return self.coord == other.coord
     
+    def get_scanned_range_in_row(self, row_y: int) -> Range|None:
+        y = self.coord.y
+        d = self.distance
+        if y - d > row_y:
+            return
+        if y + d < row_y:
+            return
+
+        if row_y > y:
+            dx = (y + d) - row_y
+        else:
+            dx = row_y - (y - d)
+
+        x = self.coord.x
+        return Range(x - dx, x + dx)
+
     def get_scanned_in_row(self, row_y: int) -> list[Point]:
         # Check if row can be reached.
         y = self.coord.y
@@ -253,11 +324,36 @@ def main():
     print(f'Part 1: {scanned}')
 
 
-    for y in range(YMIN, YMAX + 1):
-        xrange: ScanRange = cg.get_new_xrange_for_row(y)
-        for x in cg.get_xrange_for_row(y):
-            pass
+    xrange: ScanRange = None
+    gap_found: bool = False
+    y: int = YMIN - 1
+    while (y <= YMAX) and not gap_found:
+        if VERBOSE and (y % 10000 == 0):
+            print(f'{y} / {YMAX}')
+        y += 1
+        xrange = ScanRange(XMIN, XMAX)
+        for s in SENSORS:
+            r = s.get_scanned_range_in_row(y)
+            if not r or r.xmax < XMIN or r.xmin > XMAX:
+                continue
+            if r.xmin < XMIN:
+                r.xmin = XMIN
+            if r.xmax > XMAX:
+                r.xmax = XMAX
+            xrange.ranges.append(r)
+        # xrange.reduce()
+        xrange.combine_ranges()
+        if len(xrange.ranges) == 2:
+            gap_found = True
 
+    print(f'Gap found, y: {y}, xmin/max for ranges: ')
+    for r in xrange.ranges:
+        print(f'xmin/max: {r.xmin}/{r.xmax}')
+
+    x_freq = xrange.ranges[0].xmax + 1
+    y_freq = y
+
+    print(f'Part 2: {x_freq * FREQ_MULTIPLIER + y_freq}')
 
 if __name__ == "__main__":
     main()
