@@ -2,7 +2,7 @@
 import os
 file_path = os.path.abspath(os.path.dirname(__file__))
 
-from lava_drops import *
+from queue import Queue
 
 TEST: bool = False
 
@@ -14,97 +14,75 @@ else:
 with open(INPUT_FILE, 'r') as f:
     LINES = [l.strip() for l in f.readlines()]
 
-# For all drops, check if there is a adjacent that has a group.
-# If multiple adjacent have multiple groups, then merge the groups
-
-available_groups: list[int] = []
-drops: dict[tuple, int] = {}
-
-n_groups = 0
-groups = {}
-
-def get_groups(c: tuple[int]):
-    g = set()
-
-    x, y, z = c
-
-    g.add(drops.get((x + 1, y, z), -1))
-    g.add(drops.get((x, y + 1, z), -1))
-    g.add(drops.get((x, y, z + 1), -1))
-    g.add(drops.get((x - 1, y, z), -1))
-    g.add(drops.get((x, y - 1, z), -1))
-    g.add(drops.get((x, y, z - 1), -1))
-
-    if -1 in g:
-        g.remove(-1)
-
-    return list(g)
-
-for line in LINES:
-    c = tuple([int(c) for c in line.split(',')])
-    
-    g: list[int] = get_groups(c)
-    
-    if len(g) == 0:
-        if len(available_groups) > 0:
-            ng = available_groups.pop()
-        else:
-            ng = n_groups
-            n_groups += 1
-        drops[c] = ng
-        
-    elif len(g) == 1:
-        drops[c] = g[0]
-    else:
-        new_group = g[0]
-        remove_groups = g[1:]
-        available_groups += remove_groups
-        available_groups.sort(reverse=True)
-
-        for d in drops:
-            if drops[d] in remove_groups:
-                drops[d] = new_group
-
-for k, v in drops.items():
-    if not v in groups:
-        groups[v] = []
-    groups[v].append(k)
-
-
-def count_sides(g: list[tuple[int]]):
-    s = 0
-    for p in g:
-        s += 6
-        x, y, z = p
-        if (x + 1, y, z) in g:
-            s -= 1
-        if (x - 1, y, z) in g:
-            s -= 1
-        if (x, y + 1, z) in g:
-            s -= 1
-        if (x, y - 1, z) in g:
-            s -= 1
-        if (x, y, z + 1) in g:
-            s -= 1
-        if (x, y, z - 1) in g:
-            s -= 1
-
-    return s
-
-def part1():
-    sides = 0
-    for _, g in groups.items():
-        sides += count_sides(g)
-
-    # 6170 too high
-    print(f'Sides: {sides}')
-
-def part2():
-    pass
+DELTAS: list[tuple] = [
+    (1, 0, 0),
+    (-1, 0, 0),
+    (0, 1, 0),
+    (0, -1, 0),
+    (0, 0, 1),
+    (0, 0, -1)
+]
 
 def main():
-    part1()
-    part2()
+
+    drops: dict[tuple, str] = {}
+    for line in LINES:
+        drops[(tuple(int(c) for c in line.split(',')))] = ''
+    s = 0
+    for d in drops:
+        x, y, z = d
+        for delta in DELTAS:
+            dx, dy, dz = delta
+            if not (x + dx, y + dy, z + dz) in drops:
+                s += 1
+    print(f'Part 1 sides: {s}')
+
+    x_min = min(drops, key=lambda d: d[0])[0]
+    x_max = max(drops, key=lambda d: d[0])[0]
+    y_min = min(drops, key=lambda d: d[1])[1]
+    y_max = max(drops, key=lambda d: d[1])[1]
+    z_min = min(drops, key=lambda d: d[2])[2]
+    z_max = max(drops, key=lambda d: d[2])[2]
+
+    # BFS, start at min - 1, goal is max + 1
+
+    q: Queue = Queue()
+    q.put((x_min - 1, y_min - 1, z_min - 1))
+
+    water: dict[tuple, str] = {
+        (x_min - 1, y_min - 1, z_min - 1): ''
+    }
+
+    while not q.empty():
+        c = q.get()
+        x, y, z = c
+        for d in DELTAS:
+            dx, dy, dz = d
+            nx = x + dx
+            ny = y + dy
+            nz = z + dz
+            if (nx > x_max + 1) or (nx < x_min - 1):
+                continue
+            if (ny > y_max + 1) or (ny < y_min - 1):
+                continue
+            if (nz > z_max + 1) or (nz < z_min - 1):
+                continue
+        
+            nc = (nx, ny, nz)
+            if nc in water:
+                continue
+            if nc in drops:
+                continue
+            water[nc] = ''
+            q.put(nc)
+    s2 = 0
+    for d in drops:
+        x, y, z = d
+        for delta in DELTAS:
+            dx, dy, dz = delta
+            if (x + dx, y + dy, z + dz) in water:
+                s2 += 1
+    print(f'Part 2 sides: {s2}')
 
 if __name__ == "__main__":
     main()
