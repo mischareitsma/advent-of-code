@@ -25,7 +25,7 @@ GEODE_ROBOT_OBS: int = 5
 
 def part1():
     for bp in BLUEPRINTS:
-        
+        pass
 
 def part2():
     pass

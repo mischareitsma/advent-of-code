@@ -3,8 +3,9 @@ import os
 file_path = os.path.abspath(os.path.dirname(__file__))
 
 from collections import deque
+from itertools import permutations
 
-TEST: bool = False
+TEST: bool =False
 
 if TEST:
     INPUT_FILE: str = f'{file_path}/test_input.dat'
@@ -77,12 +78,15 @@ class Path:
         p.time_limit = self.time_limit
         return p
 
-    def get_pressure(self) -> int:
+    def get_pressure(self, time_limit: int = 0) -> int:
 
         pressure = 0
 
-        for valve in [v for v in self.valves[1:] if self.opened_at_minute[v] < self.time_limit]:
-            pressure += (valve_rates[valve] * (self.time_limit - self.opened_at_minute[valve]))
+        if time_limit == 0:
+            time_limit = self.time_limit
+
+        for valve in [v for v in self.valves[1:] if self.opened_at_minute[v] < time_limit]:
+            pressure += (valve_rates[valve] * (time_limit - self.opened_at_minute[valve]))
 
         return pressure
 
@@ -105,6 +109,25 @@ class Path:
 
         return p
 
+# Cache tuple, build during the first DFS run. Will store all combos
+# of paths that we find. Key is the ordered list of valves, value is
+# the pressure that is released. Replace pressure if pressure is larger
+# than other permutation of that path. Only paths that take less then 26
+# minutes are added.
+cache: dict[tuple[str,...],tuple[int, int]] = {}
+
+def add_to_cache(path: Path):
+    if path.get_time_passed() > 26:
+        return
+
+    # Tuple is unsorted, list is not hashable, so just use a string
+    key = ','.join(sorted(path.valves[1:]))
+    if len(key) == 0:
+        return
+
+    cache[key] = max(cache.get(key, 0), path.get_pressure(26))
+    
+
 def part1():
     max_pressure: int = 0
     # DFS to get max
@@ -114,22 +137,80 @@ def part1():
     while len(stack) > 0:
         current_path: Path = stack.pop()
 
+        # Build up cache for part two:
+        add_to_cache(current_path)
+
         if current_path.time_limit_exceeded() or current_path.all_valves_opened():
             max_pressure = max(max_pressure, current_path.get_pressure())
         else:
             for valve in [v for v in valves_with_nonzero_rate if v not in current_path.valves]:
                 stack.append(current_path.next_path(valve))
 
-    print(f'Max pressure: {max_pressure}')
+    print(f'Max pressure part 1: {max_pressure}')
+
+def get_available_valves(human_path: Path, elephant_path: Path) -> list[str]:
+    return [
+        v for v in valves_with_nonzero_rate
+        if v not in human_path.valves and v not in elephant_path.valves
+    ]
+
+def no_available_moves(human_path: Path, elephant_path: Path) -> bool:
+    return (
+        (human_path.time_limit_exceeded() and elephant_path.time_limit_exceeded())
+        or (len(human_path.valves) + len(elephant_path.valves) - 2 == len(valves_with_nonzero_rate))
+    )
+
+def part2_slow():
+    max_pressure: int = 0
+    
+    stack: deque[tuple[Path, Path]] = deque()
+    stack.append((Path.get_start(26), Path.get_start(26)))
+
+    while len(stack) > 0:
+        human_path, elephant_path = stack.pop()
+
+        if no_available_moves(human_path, elephant_path):
+            max_pressure = max(max_pressure, human_path.get_pressure() + elephant_path.get_pressure())
+        else:
+            for valve in get_available_valves(human_path, elephant_path):
+                if not human_path.time_limit_exceeded():
+                    stack.append((human_path.next_path(valve), elephant_path.copy()))
+                if not elephant_path.time_limit_exceeded():
+                    stack.append((human_path.copy(), elephant_path.next_path(valve)))
+
+    print(f'Max pressure part 2 slow: {max_pressure}')
 
 def part2():
     max_pressure: int = 0
-    pass
-    
+    for valves, pressure_route1 in cache.items():
+        # For sake of speed, ignore all routes where route 1 has less then
+        # a third of all valves. Bit hacky, but think this is a pretty
+        # educated guess that we need at least 1/3 of the valves per route.
+        valves_list = valves.split(',')
+        remaining_valves = ','.join(sorted([valve for valve in valves_with_nonzero_rate if valve not in valves_list]))
+
+        while len(remaining_valves) >= 2:
+            max_pressure = max(max_pressure, pressure_route1 + cache.get(remaining_valves, 0))
+            if max_pressure == 2042:
+                print('debug')
+            remaining_valves = remaining_valves[:remaining_valves.rfind(',')]
+
+
+        
+        # Could also be that not all valves can be reached, so try all combos:
+        # for i in range(len(remaining_valves) - 1):
+        #     max_pressure = max(max_pressure, cache.get(remaining_valves[:-i-1], 0))
+            # if max_pressure == 1237:
+            #     print('debug')
+
+    print(f'Max pressure part 2: {max_pressure}')
 
 def main():
     part1()
+    # Attempt too low: 2042
     part2()
+    if TEST:
+        part2_slow()
 
 if __name__ == "__main__":
     main()
