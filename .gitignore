@@ -1,10 +1,17 @@
-.vscode/
-a.out
-
-__pycache__/
-*.pyc
-
-venv/
-
 # Ignore all AoC inputs
 *.dat
+
+# Editor stuff
+.vscode/
+
+# C stuff
+a.out
+
+# Python stuff
+__pycache__/
+*.pyc
+venv/
+
+# Some temp stuff
+tmp/
+tmp.py
