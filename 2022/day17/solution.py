@@ -2,11 +2,9 @@
 import os
 file_path = os.path.abspath(os.path.dirname(__file__))
 
-from rock import Rock, Point, get_next_rock
+TEST: bool = False
 
-TEST: bool = True
-VERBOSE: bool = False
-DEBUG: bool = False
+ANSWERS: list[int] = [3068, 1514285714288] if TEST else [3083, 1532183908048]
 
 if TEST:
     INPUT_FILE: str = f'{file_path}/test_input.dat'
@@ -16,267 +14,100 @@ else:
 with open(INPUT_FILE, 'r') as f:
     LINES = [l.strip() for l in f.readlines()]
 
-# For part 2, search for a cycle. Cycle consists of same top of stack, same
-# falling block and same wind index. Top of stack lines is defined by the
-# following constant:
-LAST_N_LINES: int = 50
+GAS_JETS: list[tuple[int, int]] = [{'<': (-1, 0), '>': (1, 0)}[c] for c in LINES[0]]
+ROCKS: list[tuple[tuple[int, int],...]] = [
+    ((0, 0), (1, 0), (2, 0), (3, 0)),
+    ((1, 0), (0, 1), (1, 1), (2, 1), (1, 2)),
+    ((0, 0), (1, 0), (2, 0), (2, 1), (2, 2)),
+    ((0, 0), (0, 1), (0, 2), (0, 3)),
+    ((0, 0), (1, 0), (0, 1), (1, 1))
+]
 
-TARGET_ROCKS: int = 200
+XSIZE = 7
 
-class GasStream:
+def add_coords(a: tuple[int, int], b: tuple[int, int]) -> tuple[int, int]:
+    return (a[0] + b[0], a[1] + b[1])
 
-    dx: dict[str, int] = {'<': -1, '>': 1 }
+def add_to_rock(rock: tuple[tuple[int, int]], a: tuple[int, int]) -> tuple[tuple[int, int],...]:
+    return tuple(add_coords(r, a) for r in rock)
 
-    def __init__(self, stream_chars: str):
-        self.stream_chars = stream_chars
-        self.size = len(stream_chars)
-        self.idx = -1
+def min_max_y(rock: tuple[tuple[int, int]]) -> tuple[int, int]:
+    return min_max(rock, 1)
+
+def min_max_x(rock: tuple[tuple[int, int]]) -> tuple[int, int]:
+    return min_max(rock, 0)
+
+def min_max(rock: tuple[tuple[int, int]], coord_idx: int) -> tuple[int, int]
+    c = tuple(r[coord_idx] for r in rock)
+    return min(c), max(c)
+
+def get_height(target_rocks: int) -> int:
+    jet_idx: int = 0
+    rock_idx: int = 0
+
+    height: int = 0
+    rock_number:int = 0
+
+    rocks: set[tuple[int, int]] = set()
+
+    # Just add floor as rocks, saves a if y <= check
+    for x in range(XSIZE):
+        rocks.add((x, 0))
+
+    # cache of rock and jet indices, store the height and
+    # the rock number. Use to check cycles
+    cache: dict[tuple[int, int], tuple[int, int]] = {}
+
+    for _ in range(target_rocks):
+        rock = add_to_rock(ROCKS[rock_idx], (2, height + 4))
+        cache_key = (rock_idx, jet_idx)
+        
+        if cache_key in cache:
+            last_height, last_rock = cache[cache_key]
+            cycles, remaining = divmod(target_rocks - rock_number, rock_number - last_rock)
+            if remaining == 0:
+                return height + cycles * (height - last_height)
+        else:
+            cache[cache_key] = (height, rock_number)
+
+        can_move: bool = True
+
+        while can_move:
+            rock_after_jet = add_to_rock(rock, GAS_JETS[jet_idx])
+            xmin, xmax = min_max_x(rock_after_jet)
+
+            rock = rock if ((xmin < 0 or xmax >= XSIZE) or (len([r for r in rock_after_jet if r in rocks]) > 0)) else rock_after_jet
+
+            rock_falling_down = add_to_rock(rock, (0, -1))
+
+            if len([r for r in rock_falling_down if r in rocks]) > 0:
+                can_move = False
+            else:
+                rock = rock_falling_down
+
+            jet_idx = (jet_idx + 1) % len(GAS_JETS)
+
+        for r in rock:
+            rocks.add(r)
+
+        _, new_height = min_max_y(rock)
+        height = max(height, new_height)
+
+        rock_idx = (rock_idx + 1) % len(ROCKS)
+        rock_number += 1
     
-    def get_direction(self):
-        self.idx += 1
-        if self.idx == self.size:
-            self.idx = 0
-        
-        return self.stream_chars[self.idx]
+    return height
 
-
-class TetrisCave:
-
-    def __init__(self, xsize: int):
-        self.xsize: int = xsize
-        self.xmin: int = 0
-        self.xmax: int = xsize - 1
-
-        self.highest_y = 0
-        self.rocks: list[Rock] = []
-        self.falling_rock: Rock = None
-
-        self.gas_stream = GasStream(LINES[0])
-
-        self.rock_index: dict[Point] = {}
-
-        self.states: dict[tuple[str, int, int], tuple[int, int]] = {}
-
-        self.current_state: tuple[str, int, int] = None
-        self.rock_state: dict[int, tuple[str, int, int]] = {}
-
-        for x in range(self.xsize):
-            self.rock_index[Point(x, 0)] = None
-
-    def add_new_rock(self):
-        self.falling_rock = get_next_rock(self.highest_y + 1)
-        if VERBOSE:
-            self.print(True)
-
-    def move_rock_until_stopped(self):
-        has_stopped: bool = False
-
-        while not has_stopped:
-            self.move_rock_by_gas()
-            has_stopped = self.move_rock_down()
-        
-        self.rocks.append(self.falling_rock)
-
-        for c in self.falling_rock.coords:
-            self.rock_index[c] = self.falling_rock
-        
-        if self.falling_rock.highest_coord.y > self.highest_y:
-            self.highest_y = self.falling_rock.highest_coord.y
-
-    def move_rock_by_gas(self):
-        direction: int = self.gas_stream.get_direction()
-
-        is_left: bool = direction == '<'
-        is_right: bool = direction == '>'
-
-        if is_left and self.can_move_left():
-            self.falling_rock.move_left()
-        if is_right and self.can_move_right():
-            self.falling_rock.move_right()
-
-    def can_move_left(self) -> bool:
-        for c in self.falling_rock.coords:
-            if c.x <= self.xmin:
-                return False
-            if Point(c.x - 1, c.y) in self.rock_index:
-                return False
-        return True
-
-    def can_move_right(self) -> bool:
-        for c in self.falling_rock.coords:
-            if c.x >= self.xmax:
-                return False
-            if Point(c.x + 1, c.y) in self.rock_index:
-                return False
-        return True
-
-    def move_rock_down(self) -> bool:
-
-        if self.can_move_down():
-            self.falling_rock.move_down()
-            return False
-
-        return True
-
-    def can_move_down(self) -> bool:
-        for c in self.falling_rock.coords:
-            if Point(c.x, c.y - 1) in self.rock_index:
-                return False
-        return True
-
-    def print(self, print_falling_rock: bool = False):
-        chars: list[list[str]] = []
-        ysize = self.highest_y + (8 if print_falling_rock else 1)
-        for y in range(ysize):
-            line = []
-            for x in range(self.xsize):
-                p = Point(x, y)
-                c = '#' if p in self.rock_index else '.'
-                if print_falling_rock:
-                    if p in self.falling_rock.coords:
-                        c = '@'
-                line.append(c)
-
-            chars.append(line)
-        
-        for line in reversed(chars):
-            print(f'|{"".join(line)}|')
-        print(f'+{"-" * (self.xsize)}+')
-
-    def set_current_state(self):
-        # State if 3-tuple of string repr of last N lines, current falling
-        # rock type, current gas stream index and the current height.
-        self.current_state = (self.get_last_lines(LAST_N_LINES), self.falling_rock.rock_type, self.gas_stream.idx)
-    
-    def store_state(self):
-        self.states[self.current_state] = (len(self.rocks), self.highest_y)
-        self.rock_state[len(self.rocks)] = self.current_state
-
-    def height_after_rock(self, rock: int) -> int:
-        return self.states[self.rock_state[rock]][1]
-
-    def n_rocks(self):
-        return len(self.rocks)
-
-    def get_last_lines(self, n: int) -> str:
-        s = []
-        if self.highest_y < n:
-            n = self.highest_y
-        # At least 1 row, 
-        for yi in range(n):
-            y = self.highest_y - yi
-            for x in range(self.xsize):
-                s.append('#' if Point(x, y) in self.rock_index else '.')
-        
-        return ''.join(s)
 
 def part1():
-
-    tc = TetrisCave(7)
-
-    while (len(tc.rocks) < TARGET_ROCKS):
-        tc.add_new_rock()
-        tc.move_rock_until_stopped()
-
-    # tc.print()
-    print(f'Size of tower fater {TARGET_ROCKS} rocks (part 1): {tc.highest_y}')
-
+    print(f'Height after 2022 rocks: {get_height(2022)} ({ANSWERS[0]})')
 
 def part2():
-    tc = TetrisCave(7)
-    N_ROCKS: int = TARGET_ROCKS
-
-    while True:
-        tc.add_new_rock()
-        tc.move_rock_until_stopped()
-        tc.set_current_state()
-        if tc.current_state in tc.states:
-            break
-
-        tc.store_state()
-
-    cycle_n_rocks = tc.n_rocks() - tc.states[tc.current_state][0]
-
-    n_offset = (N_ROCKS - tc.n_rocks()) % cycle_n_rocks
-    n_cycles = (N_ROCKS - tc.n_rocks()) // cycle_n_rocks
-
-    for _ in range(n_offset):
-        tc.add_new_rock()
-        tc.move_rock_until_stopped()
-
-    total_height = tc.highest_y + n_cycles * (tc.highest_y - tc.height_after_rock(tc.n_rocks() - cycle_n_rocks))
-
-    print(f'Size of tower fater {N_ROCKS} rocks (part 2): {total_height}')
-
-
-def part2_old():
-    tc = TetrisCave(7)
-
-    # N_ROCKS: int = 1000000000000
-    N_ROCKS: int = TARGET_ROCKS
-
-    found_cycle: bool = False
-
-    while not found_cycle:
-        tc.add_new_rock()
-        tc.move_rock_until_stopped()
-        tc.set_current_state()
-        found_cycle = (tc.current_state in tc.states)
-        if not found_cycle:
-            tc.store_state()
-    
-
-    # Cycle found. This means that in the states we have a state where
-    # the last 20 lines are the same, next rock that will fall is the
-    # same and the wind index is the same. This means that we have a
-    # cycle size and height, and we just dropped the rock that started
-    # the new cycle. A cycle is always from the state that we are now
-    # at.
-    cycle_n_rocks = len(tc.rocks) - tc.states[tc.current_state][0]
-    cycle_height = tc.highest_y - tc.states[tc.current_state][1]
-
-    if DEBUG:
-        # After cycle_n_rocks-1 we should have the same state again.
-        cycle_state = tc.current_state
-        curr_rocks = len(tc.rocks)
-        curr_height = tc.highest_y
-        for _ in range(cycle_n_rocks):
-            tc.add_new_rock()
-            tc.move_rock_until_stopped()
-            tc.set_current_state()
-        assert cycle_state == tc.current_state
-        assert len(tc.rocks) == (curr_rocks + cycle_n_rocks)
-        assert tc.highest_y == (curr_height + cycle_height)
-
-
-    # Total height is the height until the cycles start. We can just take
-    # the current height, keep on adding cycles. So when we are done, we are
-    # again at the point where we just added the first rock of the cycle
-    # BBCcccCcccCcccCAA
-    # BBCcccC: height when cycle is found.
-    # cccC x n: Cycle height, but this height is the height when the cycle
-    #   is found, minus the height at the first C
-    # AA: This is only part of the cycle, the height the first two cc's
-    #   introduce, so this is the height of rock of first C + len(AA)
-    #   minus height at C
-
-    total_height = tc.highest_y
-
-    n_cycles = (N_ROCKS - tc.n_rocks()) // cycle_n_rocks
-    total_height += (n_cycles * cycle_height)
-
-    n_remaining = N_ROCKS - tc.n_rocks() - (cycle_n_rocks * n_cycles)
-    n_first_cycle = tc.states[tc.current_state][0]
-
-    total_height += (tc.height_after_rock(n_first_cycle + n_remaining) - tc.height_after_rock(n_first_cycle))
-
-    print(f'Size of tower fater {N_ROCKS} rocks (part 2 old): {total_height}')
-    # Too low: 1532183908040, 1532183908045 (+5 did not do the trick)
+    print(f'Height after 1000000000000 rocks: {get_height(1000000000000)} ({ANSWERS[1]})')
 
 def main():
     part1()
     part2()
-    part2_old()
 
 if __name__ == "__main__":
     main()
