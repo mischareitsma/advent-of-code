@@ -53,7 +53,8 @@ if TEST:
 
     side_length: int = 4
 else:
-    side_connections: dict[tuple[int, str], tuple[int, str]] = {        (1, R): (2, L),
+    side_connections: dict[tuple[int, str], tuple[int, str]] = {
+        (1, R): (2, L),
         (1, D): (3, U),
         (1, L): (4, L),
         (1, U): (6, L),
