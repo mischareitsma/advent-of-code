@@ -1,12 +1,23 @@
 import * as process from "node:process";
+import * as fs from "node:fs";
+import * as path from 'path';
+import * as url from 'url';
+
+const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 
 const data = {
 	operation: "", // Operation to run. Allowed values in ALLOWED_OPERATIONS
 	day: 0, // Day for which to run the operation
 	part: 0, // Part to run
-	input: "input.dat", // Input file name
+	input: '', // Input file name
 	test: false, // Flag determines if the current run is a test
 	verbose: false, // Verbose flag, prints stuff to terminal
+	lines: [], // Lines loaded from the input file
+	solutions: [undefined, undefined], // Solutions for the parts.
+}
+
+function getInputFilePath() {
+	return path.join(__dirname, `day${data.day}`, data.input)
 }
 
 const ALLOWED_OPERATIONS = ["create", "run"];
@@ -25,6 +36,7 @@ const ALLOWED_OPERATIONS = ["create", "run"];
  * - `-d` / `--day`: Which day to run, requires integer value as input
  * - `-p` / `--part`: Which part to run, requires integer value as input.
  * - `-i` / `--input`: Which input file to use.
+ * - `-t` / `--test`: Run as test.
  * 
  * For the operation "create", the day is required input, the rest is ignored. For the operation
  * run, the day is required. If the part is not passed, try to run both parts. If the input is not
@@ -74,6 +86,10 @@ function parseInput() {
 			case '--input':
 				data.input = process.argv[++i];
 				break;
+			case '-t':
+			case '--test':
+				data.test = true;
+				break;
 			default:
 				throw new Error(`Invalid option '${option}'`)
 		}
@@ -84,11 +100,11 @@ function parseInput() {
 	if (data.day === 0)
 		throw new Error("Missing required option '-d' / '--day'");
 
+	// Load some sensible defaults
+	if (data.input.includes('test')) data.test = true;
+	if (data.input === '') data.input = (data.test ? 'test_' : '') + 'input.dat';
+
 	log("Done parsing input");
-}
-
-function prepData() {
-
 }
 
 function createDirs() {
@@ -97,6 +113,27 @@ function createDirs() {
 
 function run() {
 	log(`Running day ${data.day} and part ${data.part} (0 = part 1 and 2)`);
+	loadFile();
+	runSolutions();
+	if (data.part === 0 || data.part === 1)
+		console.log(`Solution day ${data.day} part 1: ${data.solutions[0]}`)
+	if (data.part === 0 || data.part === 2)
+		console.log(`Solution day ${data.day} part 2: ${data.solutions[1]}`)
+
+}
+
+function loadFile() {
+	data.lines = fs.readFileSync(getInputFilePath()).toString().split('\n');
+	data.lines.pop();
+}
+
+function runSolutions() {
+	const solutions = require(`./day${data.day}/solution`);
+	solutions.
+	if (data.part === 0 || data.part === 1)
+		data.solutions[0] = solutions.part1();
+	if (data.part === 0 || data.part === 2)
+		data.solutions[0] = solutions.part2();
 }
 
 function log(message) {
