@@ -77,32 +77,112 @@ function getLowestSeed(seeds) {
 
 async function part1() {
 	return getLowestSeed(seeds);
-
-	// TODO: Whould this work?
-	// return seeds.map(s => maps.forEach(m => {s = convertUsingMap(s, m)}))
-	// 	.reduce((a, b) => (a < b ? a : b));
 }
 
-async function part2() {
-	let lowestSeed = 1e99;
 
-	// TODO: If this takes too long, we might need to mass ranges through the maps
+
+async function part2() {
+	let seedRanges = [];
 	for (let i = 0; i < seeds.length / 2; i++) {
-		console.log("Seed pair " + i);
-		for (let j = 0; j < seeds[2*i + 1]; j++) {
-			let convertedSeedNumber = seeds[2*i] + j
-			maps.forEach(map => {
-				convertedSeedNumber = convertUsingMap(convertedSeedNumber, map);
-			});
-			if (convertedSeedNumber < lowestSeed) lowestSeed = convertedSeedNumber;
-		}
+		seedRanges.push({s: seeds[2*i], r: seeds[2*i + 1]});
 	}
 
-	return getLowestSeed(newSeeds);
+	// TODO: Range mechanics come around every year, should make a lib out of it!
+	// Include range arithmetics like r1 - r2 giving you back a list of ranges
+	const getOverlap = (r1, r2) => {
+		// r1 = source map range, r2 is seed range. remainder is what is left of r2.
+
+		// Few conditions:
+		// - r1 is of left of r2, there is overlap, r1.s <= r2.s < r1.s + r1.r
+		// - r1 is of right of r2, there is overlap, r1.s <= r2.s + r2.r - 1 < r1.s + r1.r
+		// - r1 is embedded in r2: r2.s <= r1.s < r2.s + r2.r && r2.s <= r1.s + r1.r - 1 < r2.s + r2.r
+		// - r2 is embedded in r1: prev but r1 <=> r2
+
+		const result = {
+			overlappingRange: null,
+			remainders: []
+		}
+
+		if (r1.s <= r2.s && r2.s < r1.s + r1.r) {
+			if (r1.s <= r2.s + r2.r - 1 && r2.s + r2.r - 1 < r1.s + r1.r) {
+				// r2 fully embedded in r1
+				result.overlappingRange = r2;
+				// No remainder, r2 is fully in r1
+				return result
+			}
+				else {
+				// r1 left of r2
+				result.overlappingRange = {s: r2.s, r: r1.s + r1.r - r2.s}
+				result.remainders.push({
+					s: r1.s + r1.r,
+					r: (r2.s + r2.r) - (r1.s + r1.r)
+				});
+			}
+		}
+
+		if (r2.s <= r1.s && r1.s < r2.s + r2.r) {
+			if (r2.s <= r1.s + r1.r - 1 && r1.s + r1.r - 1 < r2.s + r2.r) {
+				// r1 fully embedded in r2
+				result.overlappingRange = r1;
+				result.remainders.push({
+					s: r2.s,
+					r: r1.s - r2.s
+
+				});
+				result.remainders.push({
+					s: r1.s + r1.r,
+					r: (r2.s + r2.r) - (r1.s + r1.r)
+				});
+			}
+			else {
+				// r2 left of r1
+				result.overlappingRange = {s: r1.s, r: r2.s + r2.r - r1.s}
+				result.remainders.push({
+					s: r2.s,
+					r: r1.s - r2.s
+				});
+			}
+		}
+
+		return result;
+	}
+
+	for (const map of maps) {
+		const newSeedRanges = [];
+		let processRanges = seedRanges;
+		console.log(JSON.stringify(processRanges))
+		for (const {d, s, r} of map.ranges) {
+			let newProcessRanges = [];
+			for (const seedRange of processRanges) {
+				if (seedRange.skip) continue;
+				const {overlappingRange, remainders} = getOverlap({s, r}, seedRange);
+
+				if (overlappingRange) {
+					newSeedRanges.push({
+						s: overlappingRange.s - s + d,
+						r: overlappingRange.r
+					});
+					remainders.forEach(rm => processRanges.push(rm))
+				}
+				else {
+					newProcessRanges.push(seedRange);
+				}
+			}
+			processRanges = newProcessRanges;
+		}
+		// At this point, all ranges are done and the processRanges array is filled with all ranges that didn't fit any range in the map.
+
+		seedRanges = newSeedRanges.concat(processRanges);
+		console.log("seedRanges: " + JSON.stringify(seedRanges));
+	}
+
+	// Now we have a big array of seed ranges, just need to find the lowest range.s
+	return seedRanges.map(v => v.s).reduce((a, b) => a < b ? a : b);
 }
 
 async function main() {
 	console.log(`Part 1: ${await part1()}`);
+	// TODO: Part 2 is buggy, I've seen negative range, which are "fine", then the range.s is just the "end" of the range, so the minimum might be a different number!
 	console.log(`Part 2: ${await part2()}`);
 }
 
