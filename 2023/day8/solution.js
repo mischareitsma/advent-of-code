@@ -54,90 +54,38 @@ function part1() {
 	return steps;
 }
 
-function part2_old() {
-	let steps = 0;
-	let currentNodes = [...startNodes];
-
-	console.log(startNodes);
-	console.log(JSON.stringify(nodes));
-
-	const atEnd = (nodes) => nodes.filter(n => !n.endsWith("Z")).length === 0
-
-	// TODO: for each start node see if there is a cycle, then go for greatest common denom.
-
-	while(!atEnd(currentNodes)) {
-		const newCurrentNodes = [];
-		const left = instructions[steps%N] === "L"
-		currentNodes.forEach(currentNode => {
-			newCurrentNodes.push(
-				left ?
-				nodes[currentNode].left :
-				nodes[currentNode].right
-			);
-		});
-		steps++;
-		currentNodes = newCurrentNodes;
-	}
-
-	return steps;
-}
-
-function findCycle(node) {
-	const visitedNodes = {}
-	allNodes.forEach(n => {
-		visitedNodes[n] = [];
-	});
-
-	let idx = 0;
-	let steps = 0;
-	
-	const foundCycle = (n, i) => visitedNodes[n].includes(i);
-
-	let currentNode = startNodes[0];
-
-	while(!foundCycle(currentNode, idx)) {
-		currentNode = nextNode(currentNode, instructions[idx]);
-		visitedNodes[currentNode].push(idx);
-		idx = (idx + 1) % N;
-		steps++;
-	}
-
-	console.log("Cycle found for first node after " + steps + " steps")
-	return steps;
-}
-
-function oneNode() {
-	// Noticed: cycle = 11836 for all nodes. So after 11836 we are really back to the start
-	// and in the same position in the string.
-	const steps = startNodes.map(n => findCycle(N));
-	console.log("All steps: ")
-	console.log(steps);
-
-	let currentNode = startNodes[3];
-	console.log("Start: " + currentNode);
+function oneNodeSteps(node) {
 	let i = 0;
-	while (!currentNode.endsWith("Z")) {
-		const instruction = instructions[i%N];
-		currentNode = nextNode(currentNode, instruction);
-		i++;
-		// console.log(`After ${i} steps: ${currentNode}`);
+	while (!node.endsWith("Z")) {
+		const instruction = instructions[i++%N];
+		node = nextNode(node, instruction);
 	}
-	const firstTime = i;
-	currentNode = nextNode(currentNode, instructions[i++%N])
-	while (!currentNode.endsWith("Z")) {
-		const instruction = instructions[i%N];
-		currentNode = nextNode(currentNode, instruction);
-		i++;
-		// console.log(`After ${i} steps: ${currentNode}`);
-	}
-	console.log("Next node would be: " + nextNode(currentNode, instructions[i%N]))
-	console.log("First: " + firstTime + ", 2nd: " + i + " delta: " + (i-firstTime))
-	return "";
+	return i
+}
+
+function greatestCommonDenominator(a, b) {
+	return !b ? a : greatestCommonDenominator(b, a % b);
+}
+
+function leastCommonMultiple(a, b) {
+	return (a * b) / greatestCommonDenominator(a, b);
+}
+
+function leastCommonMultipleOfList(l) {
+	let multiple = l[0];
+	l.forEach(n => {
+		multiple = leastCommonMultiple(multiple, n);
+	});
+	return multiple
+}
+
+function part2() {
+	return leastCommonMultipleOfList(startNodes.map(n => oneNodeSteps(n)));
 }
 
 async function main() {
 	console.log(`Part 1: ${part1()}`);
-	console.log(`Part 2: ${part2()} (11836 too low)`);
+	console.log(`Part 2: ${part2()}`);
 }
 
 main().then().catch(
