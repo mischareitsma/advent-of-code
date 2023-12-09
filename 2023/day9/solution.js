@@ -1,17 +1,19 @@
 import * as fs from "node:fs";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
+import { sum } from "../math.js";
+import { stringToNumberArray } from "../utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const isTest = false;
 
-const fname = (isTest ? `test_` : "") + "input.dat";
+const fname = (isTest ? "test_" : "") + "input.dat";
 
-const lines = fs.readFileSync(__dirname + "/" + fname).toString().split('\n');
+const lines = fs.readFileSync(__dirname + "/" + fname).toString().split("\n");
 lines.pop();
 
-const digits = lines.map(line => line.split(" ").map(d => Number.parseInt(d)));
+const digits = lines.map(line => stringToNumberArray(line));
 
 function getNextInSequence(digits, getPrevious) {
 	const deltas = [];
@@ -31,18 +33,16 @@ function part1() {
 }
 
 function part2() {
-	return sumNextDigitsInSequence(true)
+	return sumNextDigitsInSequence(true);
 }
 
 function sumNextDigitsInSequence(getPrevious) {
-	return digits.map(d => getNextInSequence(d, getPrevious)).reduce((a, b) => a+b);
+	return sum(digits.map(d => getNextInSequence(d, getPrevious)));
 }
 
-async function main() {
+function main() {
 	console.log(`Part 1: ${part1()}`);
 	console.log(`Part 2: ${part2()}`);
 }
 
-main().then().catch(
-	err => console.error(err)
-);
+main();
