@@ -167,19 +167,3 @@ export class Grid2D {
 		return grid;
 	}
 }
-
-export function left(p) {
-	return {x: p.x - 1, y: p.y}
-}
-
-export function right(p) {
-	return {x: p.x + 1, y: p.y}
-}
-
-export function up(p) {
-	return {x: p.x, y: p.y + 1}
-}
-
-export function down(p) {
-	return {x: p.x, y: p.y - 1}
-}

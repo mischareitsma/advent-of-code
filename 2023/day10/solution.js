@@ -133,6 +133,10 @@ function part1() {
 }
 
 function part2() {
+	// TODO: The solution is almost okay, answer is between 560 and 569. There are 9
+	// nodes still a ".". The issue is that the direction you can from is not enough, it
+	// also depends on the shape of the pipe.
+
 	// Just choose a side, if incorrect, we choose the other side.
 	const flipSides = true;
 
@@ -159,11 +163,38 @@ function part2() {
 		map.setValue(x, y, "I");
 	});
 
+	route.forEach(node => {
+		const currentInside = getInsideDirection(node.dir, !flipSides);
+		let x = node.x;
+		let y = node.y;
+		switch (currentInside) {
+			case LEFT:
+				x--;
+				break;
+			case RIGHT:
+				x++;
+				break;
+			case UP:
+				y++;
+				break;
+			case DOWN:
+				y--;
+				break;
+		}
+		if (!map.validCoords(x, y)) return;
+		if (map.getValue(x, y) === "P") return;
+		map.setValue(x, y, "O");
+	});
+
+
 	// All neighbors of I's should be I's as well
 	for (let x = 0; x < map.width; x++) {
 		for (let y = 0; y < map.height; y++) {
 			if (map.getValue(x, y) === "I") {
 				flood(map, [x, y], "I");
+			}
+			if (map.getValue(x, y) === "O") {
+				flood(map, [x, y], "O");
 			}
 		}
 	}
@@ -175,8 +206,10 @@ function part2() {
 			}
 		}
 	}
+	map.setValue(sx, sy, "S");
 	
 	map.print()
+	console.log(map.values.filter(v=>v===".").length)
 	return map.values.filter(v => v==="I").length;
 }
 
@@ -193,26 +226,6 @@ function getInsideDirection(dir, flipSides) {
 		default:
 			throw new Error("Invalid direction " + dir);
 	}
-}
-
-function part2_old() {
-	map.print();
-	const floodMap = new Grid2D(map.width + 2, map.height + 2);
-	for (let i = 0; i < floodMap.values.length; i++) {
-		floodMap.values[i] = ".";
-	}
-
-	for (let y = 0; y < map.height; y++) {
-		for (let x = 0; x < map.width; x++) {
-			floodMap.setValue(x + 1, y + 1, map.getValue(x, y));
-		}
-	}
-	// floodMap.print();
-	flood(floodMap, [0, 0]);
-	// flood(floodMap, [70, 70])
-	console.log("\n\n");
-	floodMap.print();
-	return floodMap.values.filter(v => v === ".").length;
 }
 
 function flood(map, start, floodVal="F") {
