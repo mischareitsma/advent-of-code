@@ -68,13 +68,14 @@ while (!reachedStart) {
 		prevNodeDir: path.previousDirection,
 		pipe: path.currentPipe,
 		dir: undefined,
-		step: path.steps
+		step: path.steps,
 	}
 	if ((path.previousDirection !== DOWN) && pipes[path.currentPipe].hasUpExit) {
 		path.currentY++;
 		path.currentPipe = grid.getValue(path.currentX, path.currentY);
 		path.previousDirection = UP;
 		routeNode.dir = UP
+
 	}
 	else if ((path.previousDirection !== LEFT) && pipes[path.currentPipe].hasRightExit) {
 		path.currentX++;

@@ -33,10 +33,12 @@ export class Grid2D {
 	 * @param {number} width Width of the grid
 	 * @param {number} height Height of the grid
 	 */
-	constructor(width, height) {
+	constructor(width, height, initValue) {
 		this.setWidth(width);
 		this.setHeight(height)
 		this.values = new Array(this.width * this.height);
+		if (initValue)
+			this.values.fill(initValue);
 	}
 
 	/**
