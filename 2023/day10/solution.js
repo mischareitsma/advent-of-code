@@ -14,7 +14,6 @@ const lines = fs.readFileSync(__dirname + "/" + fname).toString().split("\n");
 lines.pop();
 
 const grid = Grid2D.from_lines(lines);
-grid.print();
 
 const map = new Grid2D(grid.width, grid.height);
 
@@ -56,8 +55,6 @@ const UP = "UP";
 const RIGHT = "RIGHT";
 const DOWN = "DOWN";
 const LEFT = "LEFT";
-
-console.log(JSON.stringify(path));
 
 const route = [];
 
@@ -134,99 +131,46 @@ function part1() {
 }
 
 function part2() {
-	// TODO: The solution is almost okay, answer is between 560 and 569. There are 9
-	// nodes still a ".". The issue is that the direction you can from is not enough, it
-	// also depends on the shape of the pipe.
-
-	// Just choose a side, if incorrect, we choose the other side.
-	const flipSides = true;
-
-	route.forEach(node => {
-		const currentInside = getInsideDirection(node.dir, flipSides);
-		let x = node.x;
-		let y = node.y;
-		switch (currentInside) {
-			case LEFT:
-				x--;
-				break;
-			case RIGHT:
-				x++;
-				break;
-			case UP:
-				y++;
-				break;
-			case DOWN:
-				y--;
-				break;
-		}
-		if (!map.validCoords(x, y)) return;
-		if (map.getValue(x, y) === "P") return;
-		map.setValue(x, y, "I");
-	});
-
-	route.forEach(node => {
-		const currentInside = getInsideDirection(node.dir, !flipSides);
-		let x = node.x;
-		let y = node.y;
-		switch (currentInside) {
-			case LEFT:
-				x--;
-				break;
-			case RIGHT:
-				x++;
-				break;
-			case UP:
-				y++;
-				break;
-			case DOWN:
-				y--;
-				break;
-		}
-		if (!map.validCoords(x, y)) return;
-		if (map.getValue(x, y) === "P") return;
-		map.setValue(x, y, "O");
-	});
-
-
-	// All neighbors of I's should be I's as well
+	// Make map first 1 bigger, easier to flood.
+	const map2 = new Grid2D(map.width + 2, map.height + 2, ".");
 	for (let x = 0; x < map.width; x++) {
 		for (let y = 0; y < map.height; y++) {
-			if (map.getValue(x, y) === "I") {
-				flood(map, [x, y], "I");
-			}
-			if (map.getValue(x, y) === "O") {
-				flood(map, [x, y], "O");
-			}
+			map2.setValue(x + 1, y + 1, map.getValue(x, y));
 		}
 	}
 
-	for (let x = 0; x < map.width; x++) {
-		for (let y = 0; y < map.height; y++) {
-			if (map.getValue(x, y) === "P") {
-				map.setValue(x, y, grid.getValue(x, y));
-			}
+	const map3 = new Grid2D(map2.width * 3, map2.height * 3, ".");
+	for (let x = 1; x < map2.width-1; x++) {
+		for (let y = 1; y < map2.height-1; y++) {
+			if (map2.getValue(x, y) !== "P")
+				continue;
+			const tile = grid.getValue(x-1, y-1);
+			setBigTile(map3, x * 3 + 1, y * 3 + 1, tile)
 		}
 	}
-	map.setValue(sx, sy, "S");
-	
-	map.print()
-	console.log(map.values.filter(v=>v===".").length)
-	return map.values.filter(v => v==="I").length;
+
+	flood(map3, [0, 0], "O");
+	for (let x = 0; x < map.width; x++) {
+		for (let y = 0; y < map.height; y++) {
+			if (map.getValue(x, y) === "P")
+				continue;
+			map.setValue(x, y, map3.getValue((x+1)*3, (y+1)*3));
+		}
+	}
+	return map.values.filter(v => v === ".").length;
 }
 
-function getInsideDirection(dir, flipSides) {
-	switch (dir) {
-		case UP:
-			return flipSides ? LEFT : RIGHT;
-		case RIGHT:
-			return flipSides ? UP : DOWN;
-		case DOWN:
-			return flipSides ? RIGHT : LEFT;
-		case LEFT:
-			return flipSides ? DOWN : UP;
-		default:
-			throw new Error("Invalid direction " + dir);
-	}
+function setBigTile(map, x, y, tile) {
+	// As this is just used for the map, just use P for Path as filler for the tile.
+	map.setValue(x, y, "P");
+	if (upExitPipes.includes(tile))
+		map.setValue(x, y+1, "P");
+	if (rightExitPipes.includes(tile))
+		map.setValue(x+1, y, "P");
+	if (downExitPipes.includes(tile))
+		map.setValue(x, y-1, "P");
+	if (leftExitPipes.includes(tile))
+		map.setValue(x-1, y, "P");
 }
 
 function flood(map, start, floodVal="F") {
@@ -234,13 +178,11 @@ function flood(map, start, floodVal="F") {
 	const floodStack = [];
 
 	floodStack.push(start)
-	console.log("Start flood coords: " + start.toString())
-	console.log("Start flood value: " + map.getValue(start[0], start[1]))
 	const deltas = [1, -1];
 
 	while (floodStack.length) {
 		const [x, y] = floodStack.pop();
-		console.log(`Flooding ${x}, ${y}`);
+		// console.log(`Flooding ${x}, ${y}`);
 		if (map.getValue(x, y) === "P")  continue;
 
 		map.setValue(x, y, floodVal);

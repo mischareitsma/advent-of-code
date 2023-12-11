@@ -32,17 +32,112 @@ function getStart(g) {
 const start = getStart(grid);
 
 const pipes = {
-	horizontal: "-",
-	vertical: "|",
-	downRight: "F",
-	downLeft: "7",
-	upRight: "L",
-	upLeft: "J"
+	horizontal: {
+		value: "-",
+		up: false,
+		right: true,
+		down: false,
+		left: true,
+	},
+	vertical: {
+		value: "|",
+		up: true,
+		right: false,
+		down: true,
+		left: false,
+	},
+	downRight: {
+		value: "F",
+		up: false,
+		right: true,
+		down: true,
+		left: false,
+	},
+	downLeft: {
+		value: "7",
+		up: false,
+		right: false,
+		down: true,
+		left: true,
+	},
+	upRight: {
+		value: "L",
+		up: true,
+		right: true,
+		down: false,
+		left: false,
+	},
+	upLeft: {
+		value: "J",
+		up: true,
+		right: false,
+		down: false,
+		left: true,
+	},
+};
+
+const sides = {
+	up: "up",
+	right: "right",
+	down: "down",
+	left: "left"
 };
 
 const tiles = {
-	point: ".",
+	point: {
+		value: ".",
+		up: false,
+		right: false,
+		down: false,
+		left: false,
+	},
 	...pipes
 };
 
+const valueToTile = {}
+for (const tile in tiles) {
+	valueToTile[tiles[tile].value] = tiles[tile]
+}
+
 const routeMap = new Grid2D(grid.width, grid.height, tiles.point);
+
+function deduceStartTile() {
+	const canGoUp = grid.validY(start.y + 1) &&
+		valueToTile[grid.getValue(start.x, start.y + 1)].down;
+
+	const canGoRight = grid.validX(start.x + 1) &&
+		valueToTile[grid.getValue(start.x + 1, start.y)].left;
+
+	const canGoDown = grid.validY(start.y - 1) &&
+		valueToTile[grid.getValue(start.x, start.y - 1)].up;
+
+	const canGoLeft = grid.validX(start.x - 1) &&
+		valueToTile[grid.getValue(start.x - 1, start.y)].right;
+
+	for (const tile in tiles) {
+		if (
+			(canGoUp === tiles[tile].up) &&
+			(canGoRight === tiles[tile].right) &&
+			(canGoDown === tiles[tile].down) &&
+			(canGoLeft === tiles[tile].left)
+		) return valueToTile[tiles[tile].value];
+	}
+
+	throw new Error("Could not deduce start tile");
+}
+
+// Deduce the start pipe and replace:
+const startTile = deduceStartTile();
+
+function createRoute() {
+
+}
+
+const startRoute = {
+	tile: startTile,
+	position: start,
+	sideOne: [],
+	sideTwo: [],
+	forward: "",
+	backward: "",
+}
