@@ -19,26 +19,6 @@ export function mult(arr) {
 }
 
 /**
- * Get the minimum number if an array of numbers.
- * 
- * @param {number[]} arr Array of numbers.
- * @returns {number} The minimum value of the array.
- */
-export function min(arr) {
-	return sort([...arr])[0];
-}
-
-/**
- * Get the maximum number if an array of numbers.
- * 
- * @param {number[]} arr Array of numbers.
- * @returns {number} The maximum value of the array.
- */
-export function max(arr) {
-	return sort([...arr])[arr.length - 1];
-}
-
-/**
  * Sort a array of numbers.
  * 
  * This function sorts the array in place, and returns a reference to that same array.

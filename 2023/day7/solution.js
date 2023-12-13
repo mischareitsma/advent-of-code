@@ -81,7 +81,7 @@ function getTypeFromCardsWithJoker(cards) {
 		types.push(getTypeFromCardCounts(sort(newCounts).reverse()));
 	}
 	
-	return max(types);
+	return Math.max(types);
 }
 
 const hands = [];

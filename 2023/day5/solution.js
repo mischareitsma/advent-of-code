@@ -58,7 +58,7 @@ function getLowestSeed(seeds) {
 		locations.push(convertedSeedNumber);
 	});
 
-	return min(locations);
+	return Math.min(...locations);
 }
 
 function part1() {
@@ -160,7 +160,7 @@ function part2() {
 	}
 
 	// Now we have a big array of seed ranges, just need to find the lowest range.s
-	return min(seedRanges.map(v => v.s));
+	return Math.min(...seedRanges.map(v => v.s));
 }
 
 function main() {
