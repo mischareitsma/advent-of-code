@@ -20,11 +20,17 @@ class Rock {
 	y = 0;
 	value = "";
 	hasMoved = false;
+	northLoad = [];
 
 	constructor(x, y, value) {
 		this.x = x;
 		this.y = y;
 		this.value = value;
+	}
+
+	finishedMoving() {
+		this.hasMoved = true;
+		this.northLoad.push(this.y + 1);
 	}
 }
 
@@ -89,12 +95,14 @@ function tiltDirection(direction) {
 	let rocksStuck = rocks.length;
 
 	while (rocksStuck--) {
+		// TODO: Sorting takes time, might want to just copy the list and
+		// prune. Also, the reason why the initial run didn't work might be a bug.
 		const availableRocks = rocks
 			.filter(r => !r.hasMoved)
 			.sort((r1, r2) => sorter(r1.x, r1.y, r2.x, r2.y));
 		const rock = availableRocks.at(-1);
 		moveRock(rock, dx, dy);
-		rock.hasMoved = true;
+		rock.finishedMoving();
 	}
 
 	rocks.forEach(r => {r.hasMoved = false;})
@@ -129,7 +137,6 @@ function moveRock(r, dx, dy) {
 }
 
 const totalLoad = [];
-const totalLoadAfterCycle = [];
 
 let cycles = 0;
 
@@ -139,10 +146,10 @@ function getPattern() {
 	// Some constants in this function:
 
 	// Really need some cycles to find a pattern, return [] otherwise
-	const minimumCycles = 100;
+	const minimumCycles = 2;
 
 	// Limit how big a pattern can be. The test pattern was only 7 cycles = 7*2 = 14 entries
-	const maxPatternSize = 100;
+	const maxPatternSize = 1000;
 
 	const pattern = [];
 
@@ -177,6 +184,8 @@ function getPattern() {
 
 while (!pattern.length) {
 
+	const start = Date.now();
+
 	for (const direction of DIRECTIONS) {
 		// TODO: we are done if the loads of one cycle stay the same as the previous ones.
 		tiltDirection(direction);
@@ -186,19 +195,35 @@ while (!pattern.length) {
 			totalLoad.push(sum(rocks.map(r => r.y + 1)));
 	}
 
+	console.log(`Cycle ${cycles} took ${Date.now() - start} ms`);
+
 	cycles++;
 	pattern = getPattern();
 }
-console.log("Pattern: ", pattern)
 
-console.log(`Took ${cycles} cycles`)
+console.log(`Took ${cycles} cycles`);
+console.log(`Current load: ${totalLoad.at(-1)}`);
+console.log("Pattern: ", pattern);
+
+const actualPattern = [];
+pattern.forEach(v => actualPattern.push(v, v));
+
+console.log("Actual pattern", actualPattern);
+
+const TOTAL_CYCLES = 1000000000;
+const remainder = TOTAL_CYCLES - cycles;
+const remainderTilts = remainder * 4;
+const remainderTiltsModPattern = remainderTilts % actualPattern.length;
+
+const loadAfterAllCycles = actualPattern[remainderTiltsModPattern - 1];
 
 function part1() {
 	return totalLoad[0];
 }
 
 function part2() {
-	return "";
+	// not 94831
+	return loadAfterAllCycles;
 }
 
 function main() {
