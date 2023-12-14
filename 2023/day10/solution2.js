@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
-import { Grid2D } from "./map.js";
+import { Grid2D } from "../map.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
