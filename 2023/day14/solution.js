@@ -3,7 +3,6 @@ import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { Grid2D } from "../map.js";
 import { sum } from "../math.js";
-import { arraysAreEqual } from "../utils.js"
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -222,7 +221,6 @@ function part1() {
 }
 
 function part2() {
-	// not 94831
 	return loadAfterAllCycles;
 }
 
