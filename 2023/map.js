@@ -37,7 +37,7 @@ export class Grid2D {
 		this.setWidth(width);
 		this.setHeight(height)
 		this.values = new Array(this.width * this.height);
-		if (initValue)
+		if (initValue != null)
 			this.values.fill(initValue);
 	}
 
@@ -112,6 +112,35 @@ export class Grid2D {
 	}
 
 	/**
+	 * Increment a value in the grid. This assumes that the content of the grid are numbers.
+	 * 
+	 * @param {number} x x-coordinate
+	 * @param {number} y y-coordinate
+	 * @param {number} value increment value
+	 */
+	increment(x, y, value=1) {
+		this.values[this.getIndex(x, y)] += value;
+	}
+
+	/**
+	 * Update a value in the grid using an input value and a function that does the update.
+	 * 
+	 * @param {number} x x-coordinate
+	 * @param {number} y y-coordinate
+	 * @param {any} value Input value used for an update
+	 * @param {Function} fn Function to update the value. New value is set to the return value
+	 *                      of this function. Function will be called with current and input
+	 *                      values as parameter.
+	 */
+	updateValue(x, y, value, fn) {
+		this.checkValidCoord(x, y);
+		
+		const idx = this.getIndex(x, y);
+
+		this.values[idx] = fn(this.values[idx], value);
+	}
+
+	/**
 	 * Check if the **x** and **y** coordinates are valid coordinates.
 	 * 
 	 * @param {number} x x-coordinate
@@ -145,7 +174,7 @@ export class Grid2D {
 	print() {
 		for (let y = 0; y < this.height; y++) {
 			for (let x = 0; x < this.width; x++) {
-				process.stdout.write(this.getValue(x, this.height - 1 - y));
+				process.stdout.write(`${this.getValue(x, this.height - 1 - y)}`);
 			}
 			process.stdout.write("\n");
 		}
@@ -157,12 +186,12 @@ export class Grid2D {
 	 * @param {string[]} lines Array with lines, each line a string of characters.
 	 * @returns {Grid2D} Grid with values set from lines array.
 	 */
-	static from_lines(lines) {
+	static from_lines(lines, converter = v => v) {
 		const grid = new Grid2D(lines[0].length, lines.length);
 
 		lines.forEach((line, idx) => {
 			for (let i = 0; i < line.length; i++) {
-				grid.setValue(i, grid.height - idx - 1, line[i]);
+				grid.setValue(i, grid.height - idx - 1, converter(line[i]));
 			}
 		});
 		

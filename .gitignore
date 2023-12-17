@@ -14,4 +14,4 @@ venv/
 
 # Some temp stuff
 tmp/
-tmp.py
+tmp.*
