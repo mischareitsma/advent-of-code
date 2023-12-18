@@ -7,6 +7,8 @@ Want to generalize this grid concept. Add things like:
 - Rotation/translations?
 */
 
+// TODO: (Mischa Reitsma) Autogrow, including 'negative' directions, 2D array makes then more sense
+
 export class Grid2D {
 	/**
 	 * Width of the grid.

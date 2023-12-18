@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Grid2D } from "../map.js";
-import { sort } from "../math.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
