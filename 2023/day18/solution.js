@@ -1,11 +1,10 @@
 import { readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { sort } from "../math.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const isTest = false;
+const isTest = true;
 const testNumber = "";
 
 const fname = (isTest ? `test${testNumber}_` : "") + "input.dat";
@@ -113,150 +112,21 @@ class LagoonMap {
 		}
 	}
 
-	isHorizontal(fp) {
-		return fp.dir === "R" || fp.dir === "L";
-	}
-
-	isOtherDir(fp1, fp2) {
-		// Bit under the assumption this is always called with U/D points only, as R !== U
-		return fp1.dir !== fp2.dir;
-	}
-
-	calculateSizeV2() {
-		for (let y = 0; y < this.max.y - this.min.y + 1; y++) {
-			if (y % 1000000 === 0)
-				console.log(y);
-
-			this.size += this.getFlipPointsV2().getSize();
-		}
-	}
-
 	calculateSize() {
-
-
 		for (let y = 0; y < this.max.y - this.min.y + 1; y++) {
-			if (y % 1000000 === 0)
-				console.log(y);
-			const flipPoints = this.getFlipPoints(y);
-
-			let i = 0;
-
-			if (y === 34)
-				console.log("hack");
-
-			let prev_i = -1;
-			while (i < flipPoints.length - 1) {
-
-				if (prev_i === i) {
-					throw new Error("Error issues");
-				}
-				prev_i = i;
-
-				const startPoint = flipPoints[i++]
-
-				let nextPoint = flipPoints[i++];
-				let nextPoint2 = flipPoints[i+1];
-
-				if (this.isHorizontal(nextPoint)) {
-					nextPoint = flipPoints[i++];
-				}
-				else if (nextPoint2 && this.isHorizontal(nextPoint2)) {
-					// So we got a situation like D UL => D is the "Start"
-					i--;
-				}
-				else {
-					this.size += (nextPoint.max - startPoint.min + 1);
-					continue;
-				}
-
-				
-				if (this.isOtherDir(startPoint, nextPoint)) {
-					this.size += (nextPoint.max - startPoint.min + 1);
-					continue;
-				}
-
-				// If we get here, we have something like ULU or DRD or something, so just the starting boundary.
-
-				let max = 0;
-
-				while (max === 0) {
-					let nextPoint = flipPoints[i++];
-					let nextPoint2 = flipPoints[i];
-
-					if (!nextPoint2 || !this.isHorizontal(nextPoint2)) {
-						max = nextPoint.max;
-						break;
-					}
-
-					let nextPoint3 = flipPoints[i+1];
-					i+=2;
-
-					if (this.isOtherDir(nextPoint, nextPoint3)) {
-						continue;
-					}
-
-					max = nextPoint3.max;
-				}
-
-				this.size += (max - startPoint.min + 1);
-			}
+			this.size += this.getFlipPoints(y).getSize();
 		}
-	}
-
-	getFlipPointsV2(y) {
-		const flipPoints = new FlipPoints(y)
-		for (const dir of DIRECTIONS) {
-			for (const line of this.lines[dir]) {
-				flipPoints.add(line);
-			}
-		}
-		flipPoints.process()
 	}
 
 	getFlipPoints(y) {
-		const flipPoints = [];
+		const flipPoints = new FlipPoints(y)
 		for (const dir of DIRECTIONS) {
-			// TODO: Store type (hor, vert, and s/e (where for v, s===e))
 			for (const line of this.lines[dir]) {
-				
-				if (dir === "L" || dir === "R") {
-					if (line.start.y === y) {
-						const min = Math.min(line.start.x, line.end.x);
-						const max = Math.max(line.start.x, line.end.x);
-						flipPoints.push({
-							dir: dir,
-							min: min,
-							max: max
-						});
-					}
-				}
-				else if (dir === "U") {
-					if (line.start.y <= y && y <= line.end.y) {
-						flipPoints.push({
-							dir: dir,
-							min: line.start.x,
-							max: line.start.x
-						});
-					}
-				}
-				else if (dir === "D") {
-					if (line.end.y <= y && y <= line.start.y) {
-						flipPoints.push({
-							dir: dir,
-							min: line.start.x,
-							max: line.start.x
-						});
-					}
-				}
+				flipPoints.add({...line, dir:dir});
 			}
 		}
-
-		flipPoints.sort((a, b) => {
-			if (a.min === a.max && a.min === b.min) return -1;
-			if (a.min === a.max && a.max === b.min) return 1;
-			return a.min - b.min
-		});
-		return flipPoints
+		flipPoints.process()
+		return flipPoints;
 	}
 }
 
@@ -264,14 +134,13 @@ class FlipPoints {
 	lineInfo = [];
 	flipPoints = [];
 
-	
 	constructor(y) {
 		this.y = y;
 	}
-
+	// TODO: (Mischa Reitsma) Add could take care of getting it in a correct y-bucket, takes more memory, but only loop through all lines once
 	add(line) {
-		const isHorizontal = line.dir === "R" || line.dir === "L";
-		const isVertical = !isHorizontal;
+		const isHorizontal = (line.start.y === line.end.y);
+		const isVertical = (line.start.x === line.end.x);
 
 		if (isHorizontal && line.start.y !== this.y)
 			return;
@@ -279,17 +148,18 @@ class FlipPoints {
 		const yMin = Math.min(line.start.y, line.end.y);
 		const yMax = Math.max(line.start.y, line.end.y);
 
-		if (y < yMin || y > yMax)
+		if (this.y < yMin || this.y > yMax)
 			return;
 
 		const xMin = Math.min(line.start.x, line.end.x);
 		const xMax = Math.max(line.start.x, line.end.x);
 	
 		this.lineInfo.push({
-			start: start,
-			end: end,
+			start: line.start,
+			end: line.end,
 			min: xMin,
 			max: xMax,
+			dir: line.dir,
 			isHorizontal: isHorizontal,
 			isVertical: isVertical
 		})
@@ -310,7 +180,7 @@ class FlipPoints {
 		// types of horizontal
 		let i = 0;
 		let nextLine;
-		while (i < this.lineInfo.length - 1) {
+		while (i < this.lineInfo.length) {
 			const currentLine = nextLine ? nextLine : this.lineInfo[i++];
 			nextLine = this.lineInfo[i++];
 
@@ -321,6 +191,20 @@ class FlipPoints {
 					min: currentLine.min,
 					max: currentLine.max,
 				});
+				i--;
+				nextLine = null;
+				continue;
+			}
+
+			if (!nextLine) {
+				if (!currentLine.isVertical) throw new Error("This is weird")
+				// currentLine is last one in the array
+				this.flipPoints.push({
+					type: "V",
+					subType: "",
+					min: currentLine.min,
+					max: currentLine.max,
+				})
 				continue;
 			}
 
@@ -338,14 +222,33 @@ class FlipPoints {
 		}
 	}
 
-	getSize() {
-
+	isUTurn(fp) {
+		return fp.subType === "UD" || fp.subType === "DU";
 	}
 
-	
+	getSize() {
+		let adding = false;
+		let size = 0;
+		let min = 0;
+
+		this.flipPoints.forEach((fp) => {
+			if (!adding) {
+				if (this.isUTurn(fp)) {
+					size += fp.max - fp.min + 1;
+					return;
+				}
+				adding = true;
+				min = fp.min
+			}
+			else {
+				if (this.isUTurn(fp)) return;
+				adding = false;
+				size += fp.max - min + 1;
+			}
+		});
+		return size;
+	}
 }
-
-
 
 function part1() {
 	return new LagoonMap(smallLagoonInstructions).solve();
@@ -356,23 +259,13 @@ function part2() {
 }
 
 function main() {
-	console.log(`Part 1: ${part1()} (test: 62)`);
-	console.log(`Part 2: ${part2()} (test: 952408144115, 67622704086408 too low)`);
+	const answerPart1 = part1();
+	const testPart1 = 62
+	console.log(`Part 1: ${answerPart1} (test${!isTest ? "" : testPart1 === answerPart1 ? " OK" : " NOK"}: ${testPart1})`);
+
+	const answerPart2 = part2();
+	const testPart2 = 952408144115;
+	console.log(`Part 1: ${answerPart2} (test${!isTest ? "" : testPart2 === answerPart2 ? " OK" : " NOK"}: ${testPart2})`);
 }
 
 main();
-
-/* Notes:
-
-...........#######....
-...........#.....#....
-...........###...#....
-.............#...#....
-.............#...#....
-...........###.###....
-...........#...#......
-...........##..###.... => This added only 5, because
-............#....#....
-............######.... => Used a set here because the corners are in two lines
-
-*/
