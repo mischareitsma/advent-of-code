@@ -21,10 +21,27 @@ const accepted = [];
 
 let processingWorkFlow = true;
 
-// function getAdvancedRules(rules) {
-// 	steps = [];
-// 	for advancedRules
-// }
+function getAdvancedRules(rules) {
+	const steps = [];
+	rules.forEach((rule) => {
+		if (rule.indexOf(":") !== -1) {
+			steps.push({
+				condition: {
+					varName: rule[0],
+					operator: rule[1],
+					value: Number.parseInt(rule.slice(2, rule.indexOf(":"))),
+				},
+				next: rule.split(":")[1]
+			});
+		}
+		else {
+			steps.push({
+				next: rule
+			});
+		}
+	});
+	return steps;
+}
 
 function addRule(line) {
 	const workFlowName = line.split("{")[0];
@@ -47,11 +64,9 @@ function addRule(line) {
 		advancedRules: getAdvancedRules(rules),
 		process: new Function("xmas", functionBody)
 	}
-
 }
 
 function addPart(line) {
-	// parts.push(JSON.parse(line.replace(/=/g, ":")));
 	const part = {};
 
 	line.slice(1, -1).split(",").forEach((p) => {
@@ -62,16 +77,17 @@ function addPart(line) {
 	parts.push(part);
 }
 
+
 lines.forEach((line) => {
 	if (!line.length) {
 		processingWorkFlow = false;
 		return;
 	}
-
+	
 	if (processingWorkFlow)
-		addRule(line);
-	else
-		addPart(line);
+	addRule(line);
+else
+addPart(line);
 });
 
 parts.forEach((part) => {
@@ -88,20 +104,93 @@ parts.forEach((part) => {
 		rejected.push(part);
 });
 
-/* Algo:
-- Find the flows from in to A
-- List the conditions to pass
-*/
-
 const routes = [];
+const possibleRoutes = [];
 
+possibleRoutes.push({
+	workFlow: "in",
+	steps: [],
+	ranges: {
+		x: { min: 1, max: 4000 },
+		m: { min: 1, max: 4000 },
+		a: { min: 1, max: 4000 },
+		s: { min: 1, max: 4000 }
+	}
+});
 
-const possibleRoutes = [[{name: "in", condition: ""}]];
+const copyRoute = (route) => {
+	return {
+		workFlow: route.workFlow,
+		steps: [...route.steps],
+		ranges: {
+			x: { ...route.ranges.x },
+			m: { ...route.ranges.m },
+			a: { ...route.ranges.a },
+			s: { ...route.ranges.s }
+		}
+	}
+}
 
-while (options.length) {
-	const currentRoute = possibleRoutes.pop()
+function updateRange(range, condition, negate) {
+	const minMax = condition.operator === "<" ?
+		(negate ? "min" : "max") :
+		(negate ? "max" : "min");
+	const delta = negate ? 0 : (minMax === "max" ? -1 : 1);
+	range[minMax] = condition.value + delta;
+}
 
+function updateRanges(route, prev, curr) {
+	prev.forEach(cond => {
+		updateRange(route.ranges[cond.varName], cond, true);
+	});
 
+	if (curr)
+		updateRange(route.ranges[curr.varName], curr, false);
+}
+
+function hasValidRanges(ranges) {
+	for (const varName in ranges) {
+		if (ranges[varName].min > ranges[varName].max)
+			return false;
+	}
+
+	return true;
+}
+
+while (possibleRoutes.length) {
+	const currentRoute = possibleRoutes.pop();
+
+	if (currentRoute.workFlow === "A") {
+		routes.push(currentRoute);
+		continue;
+	}
+
+	if (currentRoute.workFlow === "R")
+		continue;
+
+	currentRoute.steps.push(currentRoute.workFlow);
+
+	const previousConditions = [];
+
+	workFlow[currentRoute.workFlow].advancedRules.forEach(rule => {
+
+		// Got some looping going on.
+		if (currentRoute.steps.includes(rule.next))
+			return;
+
+		const newRoute = copyRoute(currentRoute);
+		newRoute.workFlow = rule.next;
+
+		updateRanges(newRoute, previousConditions, rule.condition);
+
+		if (rule.condition)
+			previousConditions.push(rule.condition);
+
+		if (!hasValidRanges(newRoute.ranges))
+			return;
+
+		possibleRoutes.push(newRoute);
+	});
 }
 
 function part1() {
@@ -109,7 +198,13 @@ function part1() {
 }
 
 function part2() {
-	return "";
+	return sum(routes.map(route => {
+		let combos = 1;
+		for (const varName in route.ranges) {
+			combos *= (route.ranges[varName].max - route.ranges[varName].min + 1);
+		}
+		return combos;
+	}));
 }
 
 function main() {
