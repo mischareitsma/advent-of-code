@@ -1,9 +1,6 @@
 # Ignore all AoC inputs
 *.dat
 
-# Editor stuff
-.vscode/
-
 # C stuff
 a.out
 
