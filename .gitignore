@@ -12,3 +12,9 @@ venv/
 # Some temp stuff
 tmp/
 tmp.*
+
+# For now, ignore vscode settings
+.vscode/settings.json
+
+# Mac stuff
+.DS_Store

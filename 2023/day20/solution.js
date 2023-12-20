@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { lcm } from "../math.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -11,21 +12,6 @@ const fname = (isTest ? `test${testNumber}_` : "") + "input.dat";
 
 const lines = readFileSync(__dirname + "/" + fname).toString().split("\n");
 lines.pop();
-
-/*
-%: Flip-flop: On or Off, start Off, only flips with low pulses If turns on, sends high pulse, if
-   turned off, sends low pulse. High pulses are ignored
-&: Conjunction modules: remembers all pulses from all connected modules. When pulse comes, t will
-   update memory and send low pulse if all memory is high pulse.
-broadcaster: sends incoming pulse to all its connected modules
-button module: Starts the process, sends low pulse directly to the broadcaster
-
-pulses are processed in order (fifo)
-*/
-
-// Could do thi all over as well:
-// const low = false
-// const high = true;
 
 class FlipFlop {
 	constructor(name, targets) {
@@ -39,7 +25,11 @@ class FlipFlop {
 
 		this.on = !this.on;
 
-		return {state: this.on, source: this.name, targets: this.targets};
+		return {
+			state: this.getState(),
+			source: this.name,
+			targets: this.targets
+		};
 	}
 
 	getState() {
@@ -56,11 +46,6 @@ class Conjunction {
 		this.totalHigh = 0;
 	}
 
-	/*
-	&: Conjunction modules: remembers all pulses from all connected modules. When pulse comes, t will
-	update memory and send low pulse if all memory is high pulse.
-	*/
-
 	addSource(sourceName) {
 		this.sources.push(sourceName);
 		this.sourceStates[sourceName] = false;
@@ -73,10 +58,14 @@ class Conjunction {
 		}
 
 		return {
-			state: this.totalHigh !== this.sources.length,
+			state: this.getState(),
 			source: this.name,
 			targets: this.targets
 		};
+	}
+
+	getState() {
+		return this.totalHigh !== this.sources.length
 	}
 }
 
@@ -84,8 +73,6 @@ class Circuit {
 
 	modules = {}
 	pulses = [];
-	previousPulses = [];
-	pulsesOnTarget = [];
 	flipFlops = [];
 	conjunctions = [];
 	endModules = [];
@@ -94,7 +81,7 @@ class Circuit {
 	lowPulses = 0;
 	totalPresses = 0;
 
-	pressesRequired = 0;
+	watchState = {}
 
 	addModule(moduleName, targets) {
 		if (moduleName === "broadcaster") {
@@ -125,30 +112,32 @@ class Circuit {
 		for (const name of this.allModules) {
 			for (const targetModule of this.modules[name].targets) {
 				if (this.conjunctions.includes(targetModule)) {
-					this.modules[targetModule].addSource(name);
+					this.modules[targetModule].addSource(
+						name
+					);
 				}
 				if (!this.allModules.includes(targetModule)) {
 					this.endModules.push(targetModule)
 				}
 			}
 		}
+		this.allModules.sort();
 	}
 
-	initializeEndModules() {
-		for (const name of this.allModules) {
-			for (const targetModule of this.modules[name].targets) {
-				if (this.conjunctions.includes(targetModule)) {
-					this.modules[targetModule].addSource(name);
-				}
-			}
+	addStateWatcher(moduleName, state) {
+		this.watchState[moduleName] = {
+			state: state,
+			numberOfPresses: 0,
+			foundState: false
 		}
 	}
 
 	pressButton() {
 		this.totalPresses++;
+		this.pulsesDuringPress = 0;
+
 		this.increment(false);
-		this.pulsesOnTarget = [];
-		// this.previousPulses.push({state: false, source: "button", targets: ["broadcaster"]})
+
 		this.pulses.push({
 			state: false,
 			source: "broadcaster",
@@ -156,32 +145,34 @@ class Circuit {
 		});
 
 		while (this.pulses.length) this.processPulse();
-
-		// if (this.pulsesOnTarget.length)
-		// 	console.log("There were pulses");
-
-		console.log(`${this.totalPresses}\t${this.pulsesOnTarget.filter(p => p.state).length}\t${this.pulsesOnTarget.filter(p => !p.state).length}`)
-
-		if (this.pulsesOnTarget.length === 1 && !(this.pulsesOnTarget[0].state))
-			this.pressesRequired = this.totalPresses;
 	}
 
 	processPulse() {
 		const pulse = this.pulses.shift();
-		// Could increment number? do that for now, no need to keep track of all pulses
 		// this.previousPulses.push(pulse);
-		// TODO: increment can be +=pulse.targets.length, saves a few if/elses
+		for (const name in this.states) {
+			this.states[name].push(this.modules[name].getState());
+		}
 
 		for (const name of pulse.targets) {
 			this.increment(pulse.state);
 
-			if (name === "rx")
-				this.pulsesOnTarget.push(pulse);
-
 			if (this.endModules.includes(name))
 				continue;
 
-			const newPulse = this.modules[name].process(pulse.state, pulse.source);
+			const newPulse = this.modules[name].process(
+				pulse.state,
+				pulse.source
+			);
+
+			if (newPulse && newPulse.source in this.watchState) {
+				const ws = this.watchState[newPulse.source];
+				if (!ws.foundState && ws.state === this.modules[newPulse.source].getState()) {
+					ws.foundState = true;
+					ws.numberOfPresses = this.totalPresses;
+				}
+			}
+
 			if (newPulse)
 				this.pulses.push(newPulse);
 		}
@@ -194,23 +185,30 @@ class Circuit {
 			this.lowPulses++;
 	}
 
-	reset() {
-		this.highPulses = 0;
-		this.lowPulses = 0;
-		this.totalPresses = 0;
-		this.pressesRequired = 0;
+	foundAllCycles() {
+		for (const name in this.watchState) {
+			if (!this.watchState[name].foundState)
+				return false;
+		}
+		return true;
 	}
 }
 
-const circuit = new Circuit();
-lines.forEach(line => {
-	const [name, targets] = line.split(" -> ");
-	circuit.addModule(name, targets.split(", "));
-});
-
-circuit.initializeCircuit();
+function getCleanCircuit() {
+	const circuit = new Circuit();
+	lines.forEach(line => {
+		const [name, targets] = line.split(" -> ");
+		circuit.addModule(name, targets.split(", "));
+	});
+	
+	circuit.initializeCircuit();
+	return circuit;
+}
 
 function part1() {
+
+	const circuit = getCleanCircuit();
+
 	while(circuit.totalPresses < 1000) {
 		circuit.pressButton();
 	}
@@ -218,15 +216,44 @@ function part1() {
 }
 
 function part2() {
-	return 0;
-	circuit.reset();
-	while (circuit.pressesRequired === 0) {
-		if (circuit.totalPresses % 100000 === 0)
-			console.log("Total presses: " + circuit.totalPresses)
-		circuit.pressButton()
+	if (isTest) return 0;
+
+	/* Looking at the input, the structure is as follows:
+	
+	- Broadcast is linked to four flip flops that are part of a flip
+	  flop chain that each are linked to a conjunction. These are four
+	  isolated modules.
+	- The conjunctions of those are connected to a conjunction that acts as
+	  an inverter.
+	- Those inverters are connected to a final conjunction that is then
+	  connected to RX.
+
+	We want low to RX, which means all inverters need to send high, which
+	means that each module's conjunction needs to send low. These modules
+	have some cycle length. The LCM of those cycle lengths is what we want,
+	*/
+
+	const circuit = getCleanCircuit();
+
+	const finalConjunction = circuit.conjunctions.filter(
+		c => circuit.modules[c].targets[0] === "rx"
+	)[0];
+
+	circuit.modules[finalConjunction].sources.forEach(s => {
+		circuit.addStateWatcher(circuit.modules[s].sources[0], false)
+	});
+
+	
+	while(!circuit.foundAllCycles())
+		circuit.pressButton();
+
+	const cycles = [];
+
+	for (const name in circuit.watchState) {
+		cycles.push(circuit.watchState[name].numberOfPresses);
 	}
 
-	return circuit.pressesRequired;
+	return lcm(...cycles);
 }
 
 function main() {

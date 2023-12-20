@@ -63,16 +63,8 @@ function oneNodeSteps(node) {
 	return i;
 }
 
-function leastCommonMultipleOfList(l) {
-	let multiple = l[0];
-	l.forEach(n => {
-		multiple = lcm(multiple, n);
-	});
-	return multiple;
-}
-
 function part2() {
-	return leastCommonMultipleOfList(startNodes.map(n => oneNodeSteps(n)));
+	return lcm(...startNodes.map(n => oneNodeSteps(n)));
 }
 
 function main() {

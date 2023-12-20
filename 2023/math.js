@@ -50,9 +50,13 @@ export function gcd(a, b) {
  * This function calculates the least common multiple of two numbers.
  * 
  * @param {number} a First number
- * @param {number} b Second number
+ * @param {number[]} b Additional numbers
  * @returns {number} Least common multiple of the two numbers
  */
-export function lcm(a, b) {
-	return (a * b) / gcd(a, b);
+export function lcm(a, ...b) {
+	b.forEach(n => {
+		a = (a * n) / gcd(a, n);
+	});
+
+	return a;
 }
