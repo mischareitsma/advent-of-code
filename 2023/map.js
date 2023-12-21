@@ -199,4 +199,15 @@ export class Grid2D {
 		
 		return grid;
 	}
+
+	copy(valueCopier) {
+		const newMap = new Grid2D(this.width, this.height)
+
+		if (!valueCopier)
+			newMap.values = [...this.values];
+		else
+			this.values.forEach((v, idx) => newMap.values[idx] = valueCopier(v));
+
+		return newMap;
+	}
 }
