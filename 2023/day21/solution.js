@@ -13,7 +13,6 @@ const fname = (isTest ? `test${testNumber}_` : "") + "input.dat";
 const lines = readFileSync(__dirname + "/" + fname).toString().split("\n");
 lines.pop();
 
-
 const TILES = {
 	garden: ".",
 	start: "S",
