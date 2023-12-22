@@ -16,51 +16,15 @@ lines.pop();
 const TILES = {
 	garden: ".",
 	start: "S",
+	visited: "O",
 	rock: "#"
 }
 
 const STEPS = isTest ? 6 : 64; // Steps for part 1
-const DIRECTIONS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
 const map = Grid2D.from_lines(lines);
 
 const START = map.getCoords(map.values.indexOf(TILES.start));
-
-function part1_naive() {
-	let steps = STEPS;
-	let locations = [START.join(",")];
-	while (steps--) {
-		const newLocations = [];
-
-		locations.forEach(location => {
-			// Need to parseInt every time, maybe still two maps are better, one
-			// with string to check (could be a set) and the other with the actual
-			// coords.
-			// Other option: Could also just make a stepsMap...
-			const [x, y] = location.split(",").map(e => Number.parseInt(e));
-
-			DIRECTIONS.forEach(dir => {
-				const [dx, dy] = dir;
-				const xn = x + dx;
-				const yn = y + dy;
-				const coords = `${xn},${yn}`
-
-				if (newLocations.includes(coords))
-					return;
-
-				if (!map.validCoords(xn, yn))
-					return;
-
-				if (map.getValue(xn, yn) === TILES.rock)
-					return;
-
-				newLocations.push(coords);
-			});
-		});
-		locations = newLocations;
-	}
-	return locations.length;
-}
 
 const DELTAS = [
 	{dx: 0, dy: 1},
@@ -69,102 +33,113 @@ const DELTAS = [
 	{dx: 0, dy: -1}
 ];
 
-function getPlotsAfterSteps(steps) {
-	let currentMap = map.copy();
-
-	currentMap.setValue(START[0], START[1], "O");
-	const possiblePlots = [];
-
-	const TOTAL_STEPS = steps;
+// Could memoize map values vs steps, start_x, start_y
+function getPlotsAfterSteps(map, steps, start_x, start_y) {
+	const currentMap = map.copy();
+	currentMap.setValue(start_x, start_y, TILES.visited);
 
 	while (steps--) {
-		const stepsMap = map.copy();
+		const unsetCoords = [];
+		const setCoords = new Set();
 		currentMap.values.forEach((steppedOn, idx) => {
-			if (steppedOn !== "O") return;
+			if (steppedOn !== TILES.visited) return;
 	
 			const [x, y] = currentMap.getCoords(idx);
+			unsetCoords.push(idx);
 	
 			DELTAS.forEach(delta => {
 				const xn = x + delta.dx;
 				const yn = y + delta.dy;
 	
 				if (!currentMap.validCoords(xn, yn)) return;
-				if (currentMap.getValue(xn, yn) === "#") return;
+				if (currentMap.getValue(xn, yn) === TILES.rock) return;
 	
-				stepsMap.setValue(xn, yn, "O");
+				setCoords.add(currentMap.getIndex(xn, yn));
 			});
 		});
 
-		currentMap = stepsMap.copy();
-		possiblePlots.push(currentMap.values.filter(v => v === "O").length)
-		console.log(`After ${TOTAL_STEPS - steps} steps we have ${possiblePlots.at(-1)} positions`);
-		if (possiblePlots.length >= 5 && possiblePlots.at(-3) === possiblePlots.at(-1) && possiblePlots.at(-1) === possiblePlots.at(-5)) break;
+		unsetCoords.forEach(idx => currentMap.values[idx] = TILES.garden);
+		setCoords.forEach(idx => currentMap.values[idx] = TILES.visited);
 	}
 
-	/* It oscillates between two values, for the test map 42 and 39
-	
-	Possible algo:
-	- For all boundary points, check how many steps it takes to get oscillation and which value
-	- For all boundary points, get shortest paths to other edges
-	- For start position, get shortest paths to boundaries
-	- Condense the infinite map pattern to a map itself, where each element is a copy of the "map", size is naively (STEPS / shortest route left right or up down) ** 2?
-	  check note before, probably not or only for a few maps around the original
-	- Calculate for the boundaries the number of steps it takes to get to oscillation, and what
-	  the initial oscillation value would be.
-
-
-	Extra note:
-	At a certain moment the shortest routes are the "highways" between maps, so the height or
-	width of the map. Those "routes" will catch up on alternate routes rather quickly, seeing
-	that the map is only 131 x 131 and the number iof steps is many orders of magnitude larger.
-	So then it just becomes a matter of calculating after how many steps we get to the corners
-	of the original map. And for a few maps around us we still need to keep track of how fast
-	we get there I think, because the oscillation might be offset.
-	*/
-	
-	return 0;
+	return currentMap.values.filter(v => v === TILES.visited).length;
 }
 
 function part1() {
-	getPlotsAfterSteps(50);
+	return getPlotsAfterSteps(map, STEPS, START[0], START[1]);
 }
 
 function part2() {
-	const testInput = [6, 10, 50, 100, 500, 1000, 5000];
-	const testResult = [16, 50, 1594, 6536, 167004, 668697, 16733044];
-	/**
-	 * In exactly 6 steps, he can still reach 16 garden plots.
-	In exactly 10 steps, he can reach any of 50 garden plots.
-	In exactly 50 steps, he can reach 1594 garden plots.
-	In exactly 100 steps, he can reach 6536 garden plots.
-	In exactly 500 steps, he can reach 167004 garden plots.
-	In exactly 1000 steps, he can reach 668697 garden plots.
-	In exactly 5000 steps, he can reach 16733044 garden plots.
-	 */
-	if (isTest) {
-		testInput.forEach((steps, idx) => {
-			logResult(`2.${idx}`, getPlotsAfterSteps(steps), testResult[idx]);
-		});
+	if (isTest) return "Test grid is a pain, not running part2 with test";
 
-	}
-	else {
-		logResult(2, getPlotsAfterSteps(26501365), "N/A");
-	}
-	return "";
-}
+	/* Old code had a lot of analysis stuff. Some learnings:
+	- map center has an empty row + column, and empty rows around the rest. So
+	  fastest way N, S, E, W is always through the centers, and NE, SE, NW, SE if through center
+	  and then along those sides. Which means (size of map is 131) it takes 65 steps to get to
+	  the edge from S. then another 131 we can get to the other edge on the next map etc.
+	- The number is nice. number - 65 (steps to get to edge of original map) is divisible by 131
+	- A map that is fully visited will alternate between two states (odd or even amount of steps
+	  on the map).
+	- Drew the shapes on a good old notebook, diamond shaped with a lot of full maps. These maps
+	  will alternate between the two states. As the total number of steps is odd, it means the
+	  original map will be in the state of odd steps, the neighbors the state after an even
+	  amount of steps, etc. The N, S, E and W directions we can get the number of plots with
+	  as starting position the middle of X or y, and then 0 or 130 for x or y, and then do
+	  130 steps. The edges will alternate between to types of states. One starting at any of
+	  the four corners and doing 64 more steps (takes 66 steps to get to that corner, and then
+	  we are left with 130 - 66 = 64 steps. The other one has 131 steps more (go up for example
+	  the last full tile, were the 64 is if we go up in the last tile)
+	- The number of tiles can be calculated. It follows a pattern (which was also drawn in my
+	  notebook :-)). But tried to tabulate the first few times we do 131 steps below:
 
-function logResult(part, result, testResult) {
-	console.log(
-		`Part ${part}: ${result} (test${testNumber}` +
-		`${!isTest ? "" : testResult === result ? " OK" : " NOK"}: ${testResult})`
+	131 steps | full tiles | small corners | big corners
+	1         | 1 (0 odd)  | 1             | 0
+	2         | 5 (4 even) | 2             | 1
+	3         | 13(4 even) | 3             | 2
+	4         | 25(16 even)| 4             | 3
+
+	As we have an "even" amount of steps, the pattern there is: N^2 even plots (2^2= 4,4^2=16)
+	and an (N-1)^2 uneven plots (2-1)^2 = 1, 4 + 1 = 5, (4-1)^2 = 9, 9+16=25
+	*/
+
+	const mapSize = map.width;
+	const mapEdge = mapSize - 1
+	const center = (mapSize - 1) / 2
+	const totalSteps = 26501365;
+	const totalTiles = (totalSteps - center) / mapSize; // A tile is one full map.
+
+	const northPlots = getPlotsAfterSteps(map, 130, center, 0);
+	const westPlots = getPlotsAfterSteps(map, 130, mapEdge, center);
+	const eastPlots = getPlotsAfterSteps(map, 130, 0, center);
+	const southPlots = getPlotsAfterSteps(map, 130, center, mapEdge);
+
+	const northWestSmall = getPlotsAfterSteps(map, 64, mapEdge, 0);
+	const northEastSmall = getPlotsAfterSteps(map, 64, 0, 0);
+	const southWestSmall = getPlotsAfterSteps(map, 64, mapEdge, mapEdge);
+	const southEastSmall = getPlotsAfterSteps(map, 64, 0, mapEdge);
+
+	const northWestLarge = getPlotsAfterSteps(map, 64 + 131, mapEdge, 0);
+	const northEastLarge = getPlotsAfterSteps(map, 64 + 131, 0, 0);
+	const southWestLarge = getPlotsAfterSteps(map, 64 + 131, mapEdge, mapEdge);
+	const southEastLarge = getPlotsAfterSteps(map, 64 + 131, 0, mapEdge);
+
+	const numberOfEvenTiles = totalTiles**2;
+	const numberOfOddTiles = (totalTiles - 1)**2;
+
+	const numberOfEvenPlots = getPlotsAfterSteps(map, 65 + 131, START[0], START[1]);
+	const numberOfOddPlots = getPlotsAfterSteps(map,  65 + 131 + 1, START[0], START[1]);
+
+	return (
+		northPlots + westPlots + eastPlots + southPlots +
+		totalTiles * (northWestSmall + northEastSmall + southWestSmall + southEastSmall) +
+		(totalTiles - 1) * (northWestLarge + northEastLarge + southWestLarge + southEastLarge) +
+		numberOfEvenTiles * numberOfEvenPlots + numberOfOddTiles * numberOfOddPlots 
 	);
-
 }
 
 function main() {
-	// logResult(1, part1(), 16);
-	// part2();
-	getPlotsAfterSteps(5000)
+	console.log(part1());
+	console.log(part2());
 }
 
 main();
