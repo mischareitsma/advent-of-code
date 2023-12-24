@@ -265,7 +265,7 @@ function main() {
 
 	const answerPart2 = part2();
 	const testPart2 = 952408144115;
-	console.log(`Part 1: ${answerPart2} (test${!isTest ? "" : testPart2 === answerPart2 ? " OK" : " NOK"}: ${testPart2})`);
+	console.log(`Part 2: ${answerPart2} (test${!isTest ? "" : testPart2 === answerPart2 ? " OK" : " NOK"}: ${testPart2})`);
 }
 
 main();

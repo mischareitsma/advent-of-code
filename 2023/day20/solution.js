@@ -267,7 +267,7 @@ function main() {
 	let testPart2 = 0;
 	if (testNumber === 1) testPart2 = 0;
 	if (testNumber === 2) testPart2 = 0;
-	console.log(`Part 1: ${answerPart2} (test${testNumber}${!isTest ? "" : testPart2 === answerPart2 ? " OK" : " NOK"}: ${testPart2})`);
+	console.log(`Part 2: ${answerPart2} (test${testNumber}${!isTest ? "" : testPart2 === answerPart2 ? " OK" : " NOK"}: ${testPart2})`);
 }
 
 main();
