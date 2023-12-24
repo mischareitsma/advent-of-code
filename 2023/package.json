@@ -8,5 +8,8 @@
   },
   "type": "module",
   "author": "Mischa Reitsma",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "z3-solver": "^4.12.4"
+  }
 }

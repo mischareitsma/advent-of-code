@@ -18,3 +18,6 @@ tmp.*
 
 # Mac stuff
 .DS_Store
+
+# javascript/typscript stuff
+node_modules/

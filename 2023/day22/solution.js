@@ -495,6 +495,9 @@ function part1() {
 }
 
 function part2() {
+	// Another solution could be something like:
+	// for each cube in grid: count the number of cubes that it is supporting that are not
+	// supported by others, and keep on doing this. This would also get that number probably.
 	let total = 0;
 	for (let i = 0; i < cubeGrid.cubes.length; i++) {
 		const cubeGridCopy = cubeGrid.copy();
