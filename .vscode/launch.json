@@ -7,10 +7,16 @@
 		{
 			"type": "node",
 			"request": "launch",
-			"name": "Run current file",
+			"name": "Run current JavaScript file",
 			"skipFiles": [
 				"<node_internals>/**"
 			],
+			"program": "${file}"
+		},
+		{
+			"type": "python",
+			"request": "launch",
+			"name": "Run current Python file",
 			"program": "${file}"
 		}
 	]
