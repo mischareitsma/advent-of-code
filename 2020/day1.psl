@@ -1,0 +1,51 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+
+	// --------------------------------------------------------------------
+public String part1()
+	/* DOC ----------------------------------------------------------------
+	Part 1 solution.
+	** ENDDOC */
+
+	type Number result = 0
+
+	type Integer i, j
+
+	for i=1:1:this.getInputSize() - 1 { quit:(result > 0)
+		type Integer n1 = this.getInputLine(i).toInteger()
+		for j = i:1:this.getInputSize() { quit:(result > 0)
+			type Integer n2 = this.getInputLine(j).toInteger()
+			if (n1 + n2 = 2020) {
+				set result = n1 * n2
+			}
+		}
+	}
+
+	return result
+
+
+	// --------------------------------------------------------------------
+public String part2()
+	/* DOC ----------------------------------------------------------------
+	Part 1 solution.
+	** ENDDOC */
+
+	type Number result = 0
+
+	type Integer i, j, k
+
+	for i=1:1:this.getInputSize() - 2 { quit:(result > 0)
+		type Integer n1 = this.getInputLine(i).toInteger()
+		for j = i:1:this.getInputSize() - 1 { quit:(result > 0)
+			type Integer n2 = this.getInputLine(j).toInteger()
+			for k = j:1:this.getInputSize() { quit:(result > 0)
+				type Integer n3 = this.getInputLine(k)
+				if (n1 + n2 + n3 = 2020) {
+					set result = n1 * n2 * n3
+				}
+			}
+		}
+	}
+
+	return result

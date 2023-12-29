@@ -1,0 +1,244 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF passports class = void(void, String) private node = "passports"
+	/* DOC ----------------------------------------------------------------
+	Passport info, parsed. Format is passports(seq, field) = value
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF numberOfPassports = 0 class = Integer private node = "day4"
+	/* DOC ----------------------------------------------------------------
+	Number of passports stored.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF validPassportNumbers = "" class = List private node = "validPassports"
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 4
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final void processInput()
+	/* DOC ----------------------------------------------------------------
+	Parse all passport information.
+	** ENDDOC */
+
+	type Integer i = 0
+
+	type String passportLine = ""
+
+	for i=1:1:this.getInputSize() {
+		type String line = this.getInputLine(i)
+		if (line = "") {
+			do this.addPassport(passportLine)
+			set passportLine = ""
+		}
+		else {
+			set passportLine = passportLine_" "_ line
+		}
+	}
+
+	do this.addPassport(passportLine)
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private void addPassport(req String passportLine)
+	/* DOC ----------------------------------------------------------------
+	Add a passport.
+	** ENDDOC */
+
+	set this.numberOfPassports = this.numberOfPassports + 1
+
+	type Integer i = 0
+
+	for i = 1:1:passportLine.length(" ") {
+		type String info = passportLine.piece(" ", i)
+		set this.passports(this.numberOfPassports, info.piece(":", 1)) = info.piece(":", 2)
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	byr (Birth Year)
+	iyr (Issue Year)
+	eyr (Expiration Year)
+	hgt (Height)
+	hcl (Hair Color)
+	ecl (Eye Color)
+	pid (Passport ID)
+	cid (Country ID)
+	** ENDDOC */
+
+	type literal List requiredFields = "byr,iyr,eyr,hgt,hcl,ecl,pid"
+
+	type Integer i
+
+	for i = 1:1:this.numberOfPassports {
+		type Boolean fieldMissing = false
+		type Integer j
+
+		for j = 1:1:requiredFields.count() { quit:fieldMissing
+			set fieldMissing = 'this.passports(i,requiredFields.elementAt(j)).exists()
+		}
+
+		if not fieldMissing do this.validPassportNumbers.add(i)
+	}
+
+	return this.validPassportNumbers.count()
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part 2:
+
+	byr (Birth Year) - four digits; at least 1920 and at most 2002.
+	iyr (Issue Year) - four digits; at least 2010 and at most 2020.
+	eyr (Expiration Year) - four digits; at least 2020 and at most 2030.
+	hgt (Height) - a number followed by either cm or in:
+	If cm, the number must be at least 150 and at most 193.
+	If in, the number must be at least 59 and at most 76.
+	hcl (Hair Color) - a # followed by exactly six characters 0-9 or a-f.
+	ecl (Eye Color) - exactly one of: amb blu brn gry grn hzl oth.
+	pid (Passport ID) - a nine-digit number, including leading zeroes.
+	cid (Country ID) - ignored, missing or not.
+	** ENDDOC */
+
+	type Integer validPassports = 0
+
+	type Integer i
+
+	for i = 1:1:this.validPassportNumbers.count() {
+		type Integer id = this.validPassportNumbers.elementAt(i)
+
+		do {
+			catch ignoreError {
+			}
+
+			if not $$isValidYear(this.passports(id, "byr"), 1920, 2002) do throwInvalidPassportError("byr", id)
+			if not $$isValidYear(this.passports(id, "iyr"), 2010, 2020) do throwInvalidPassportError("iyr", id)
+			if not $$isValidYear(this.passports(id, "eyr"), 2020, 2030) do throwInvalidPassportError("byr", id)
+			if not $$isValidHeight(this.passports(id, "hgt")) do throwInvalidPassportError("hgt", id)
+			if not $$isValidHairColor(this.passports(id, "hcl")) do throwInvalidPassportError("hcl", id)
+			if not $$isValidEyeColor(this.passports(id, "ecl")) do throwInvalidPassportError("ecl", id)
+			if not $$isValidPassportID(this.passports(id, "pid")) do throwInvalidPassportError("pid", id)
+
+			set validPassports = validPassports + 1
+		}
+
+	}
+
+	return validPassports
+
+	
+	// --------------------------------------------------------------------
+private static void throwInvalidPassportError(req String field, req Integer id)
+	/* DOC ----------------------------------------------------------------
+	Throw invali passport error.
+	** ENDDOC */
+
+	throw Class.new("Error", %ModuleName_"-E-InvalidPassport,Invalid field "_ field_" in passport "_ id)
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private static Boolean isValidYear(req String year, req Integer min, req Integer max)
+	/* DOC ----------------------------------------------------------------
+	year is 4 digit year, within min <= year <= max.
+	** ENDDOC */
+
+	if (year.length() '= 4) return false
+
+	return $$isBetween(+year, min, max)
+
+
+	// --------------------------------------------------------------------
+private static Boolean isBetween(req Number n, req Number min, req Number max)
+	/* DOC ----------------------------------------------------------------
+	Return min <= n <= max.
+	** ENDDOC */
+	return (n >= min) and (n <= max)
+
+
+	// --------------------------------------------------------------------
+private static Boolean isValidHeight(req String h)
+	/* DOC ----------------------------------------------------------------
+	hgt (Height) - a number followed by either cm or in:
+	If cm, the number must be at least 150 and at most 193.
+	If in, the number must be at least 59 and at most 76.
+	** ENDDOC */
+
+	type String units = h.extract(h.length() - 1, h.length())
+	type String value = h.extract(1, h.length() - 2)
+
+	if (value '= +value) return false
+	if (units = "cm") return $$isBetween(+value, 150, 193)
+	if (units = "in") return $$isBetween(+value, 59, 76)
+
+	return false
+
+
+	// --------------------------------------------------------------------
+private static Boolean isValidHairColor(req String hcl)
+	/* DOC ----------------------------------------------------------------
+	hcl (Hair Color) - a # followed by exactly six characters 0-9 or a-f.
+	** ENDDOC */
+
+	type literal String VALIDCHARS = "0123456789abcdef"
+
+	if (hcl.length() '= 7) return false
+	if (hcl.extract(1) '= "#") return false
+
+	type Boolean isValid = true
+
+	type Integer i
+	for i = 2:1:7 { quit:'isValid
+		set isValid = VALIDCHARS.contains(hcl.extract(i))
+	}
+
+	return isValid
+
+
+	// --------------------------------------------------------------------
+private static Boolean isValidEyeColor(req String ecl)
+	/* DOC ----------------------------------------------------------------
+	Check of valid eye color.
+	ecl (Eye Color) - exactly one of: amb blu brn gry grn hzl oth.
+	** ENDDOC */
+
+	type literal List VALID = "amb,blu,brn,gry,grn,hzl,oth"
+
+	return VALID.contains(ecl)
+
+
+	// --------------------------------------------------------------------
+private static Boolean isValidPassportID(req String pid)
+	/* DOC ----------------------------------------------------------------
+	Check for valid passport ID.
+	pid (Passport ID) - a nine-digit number, including leading zeroes.
+	** ENDDOC */
+
+	return pid?9N

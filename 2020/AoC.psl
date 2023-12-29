@@ -1,0 +1,217 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public
+
+	/* DOC ----------------------------------------------------------------
+	Base AoC class with some easy to use functions.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF day = 0 class = Integer private node = "aoc" position = 1
+	/* DOC ----------------------------------------------------------------
+	Day to run.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF isTest = true class = Boolean private node = "aoc" position = 2
+	/* DOC ----------------------------------------------------------------
+	Flag that indicates the run uses the test input.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF testSuffix = "" class = String private node = "aoc" position = 3
+	/* DOC ----------------------------------------------------------------
+	The test number to run in case the run is using test input, and there
+	are multiple test examples.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF inputLines class = void(String) private node = "inputLines"
+	/* DOC ----------------------------------------------------------------
+	Raw input from the input file. This array is keyed by line number,
+	starting with 1.
+	** ENDDOC */
+
+
+	// ---------------------------------------------------------------------
+	#PROPERTYDEF inputSize = 0 class = Integer private node = "inputInfo" position = 1
+	/* DOC ----------------------------------------------------------------
+	Number of lines loaded.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@args	1
+		The day to run
+
+	@args	--test
+		Flag that indicates to run as test.
+
+	@args	--testSuffix=\<suffix in test file name>
+		Suffix for the test input file.
+	** ENDDOC */
+	
+
+	do {
+		catch err {
+			write "Error: "_ err.toString()
+		}
+
+		type Error argError
+		if not Runtime.checkArguments(ret argError, args(), 1, 1, "", "test,testSuffix") throw argError
+
+		// We don't do any validations on if classes exist etc. Just assume it is there
+		type void initParams(Object)
+		set initParams(1) = {Object}args(1)
+		set initParams(2) = {Object}(args("test").exists())
+		set initParams(3) = {Object}(args("testSuffix").get())
+
+		type AoC aoc = Class.newInstance("day"_ args(1), initParams())
+		do aoc.main()
+	}
+
+	return 0
+
+
+	// --------------------------------------------------------------------
+private void initialize(
+		  req Integer day
+		, req Boolean isTest
+		, req String testSuffix
+		)
+	/* DOC ----------------------------------------------------------------
+	Initialize an AoC class and load the correct input.
+	** ENDDOC */
+
+	set this.day = day
+	set this.isTest = isTest
+	set this.testSuffix = testSuffix
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private void loadInput()
+	/* DOC ----------------------------------------------------------------
+	Load input into the input array.
+	** ENDDOC */
+
+	type IO io = Class.new("IO")
+
+	type String fileName = ""
+	if (this.isTest) set fileName = "test"_ this.testSuffix_ "_"
+
+	set fileName = fileName_ "day"_ this.day_"_input.dat"
+
+	set io.fileName = fileName
+	set io.openParams = "READ"
+	set io.recordSize = PSL.maxStringLength
+
+	do io.open()
+
+	do {
+		catch ioError {
+			do io.close()
+			if not (ioError.ident = "IOEOF") throw ioError
+		}
+
+		while true {
+			type String line = io.read()
+			set this.inputSize = this.inputSize + 1
+			set this.inputLines(this.inputSize) = line
+		}
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final Integer getInputSize()
+	/* DOC ----------------------------------------------------------------
+	Getter for input size.
+	** ENDDOC */
+
+	return this.inputSize
+
+
+	// --------------------------------------------------------------------
+public final String getInputLine(req Integer lineNumber)
+	/* DOC ----------------------------------------------------------------
+	Get a line number from the input.
+	** ENDDOC */
+
+	if ((lineNumber < 0) or (lineNumber > this.getInputSize())) throw Class.new("Error", %ModuleName_"-E-IndexOutOfBound,"_("Invalid line number, valid range: ]1, "_ this.getInputSize()_ "[").addQuotes())
+
+	return this.inputLines(lineNumber)
+
+
+	// --------------------------------------------------------------------
+protected void processInput()
+	/* DOC ----------------------------------------------------------------
+	This method can be overridden by descendants to process the input lines
+	into a more usable format.
+	** ENDDOC */
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final void main()
+	/* DOC ----------------------------------------------------------------
+	Main method to start execution of a day.
+	** ENDDOC */
+
+	type Integer startTime0 = Runtime.getMicroTime()
+	do this.loadInput()
+	do this.processInput()
+	type Integer endTime0 = Runtime.getMicroTime()
+
+	write "Loaded and processed input in "_ $$formatTime(startTime0, endTime0)_ " seconds.",!
+
+	type Integer startTime1 = Runtime.getMicroTime()
+	type String part1 = this.part1()
+	type Integer endTime1 = Runtime.getMicroTime()
+
+	write "Part 1 ran in "_ $$formatTime(startTime1, endTime1)_ " seconds, solution: "_ part1,!
+
+	type Integer startTime2 = Runtime.getMicroTime()
+	type String part2 = this.part2()
+	type Integer endTime2 = Runtime.getMicroTime()
+
+	write "Part 2 ran in "_ $$formatTime(startTime2, endTime2)_ " seconds, solution: "_ part2,!
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private static Number formatTime(Integer start, Integer end)
+	/* DOC ----------------------------------------------------------------
+	Return the number of seconds between the two microtimes.
+	** ENDDOC */
+
+	return ((end - start) / (10**6) ).roundDec(3)
+
+
+	// --------------------------------------------------------------------
+protected String part1()
+	/* DOC ----------------------------------------------------------------
+	"Abstract" part1() method, to be implemented by various days.
+	** ENDDOC */
+
+	return "PART 1 NOT IMPLEMENTED"
+
+
+	// --------------------------------------------------------------------
+protected String part2()
+	/* DOC ----------------------------------------------------------------
+	"Abstract" part2() method, to be implemented by various days.
+	** ENDDOC */
+
+	return "PART 2 NOT IMPLEMENTED"

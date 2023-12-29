@@ -1,0 +1,65 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF validPasswords class = void(Integer) node = "validPasswords"
+	/* DOC ----------------------------------------------------------------
+	Number of valid passwords for part 1 and 2.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+public final void processInput()
+	/* DOC ----------------------------------------------------------------
+	Part 1 and 2 can be checked in one loop, do this in the processInput()
+	method.
+	** ENDDOC */
+
+	set this.validPasswords(1) = 0
+	set this.validPasswords(2) = 0
+
+	type Integer i
+
+	for i = 1:1:this.getInputSize() {
+		type String line = this.getInputLine(i)
+
+		type Integer n1 = line.piece("-", 1).toInteger()
+		type Integer n2 = line.piece("-", 2).piece(" ", 1).toInteger()
+
+		type String char = line.piece(" ", 2).piece(":", 1)
+
+		type String password = line.piece(" ", 3)
+
+		type String nChar = password.length(char) - 1
+
+		if (nChar >= n1) and (nChar <= n2) set this.validPasswords(1) = this.validPasswords(1) + 1
+
+		type Integer charMatch = 0
+
+		if (password.extract(n1) = char) set charMatch = charMatch + 1
+		if (password.extract(n2) = char) set charMatch = charMatch + 1
+
+		if (charMatch = 1) set this.validPasswords(2) = this.validPasswords(2) + 1
+
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	** ENDDOC */
+
+	return this.validPasswords(1)
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part 2.
+	** ENDDOC */
+
+	return this.validPasswords(2)

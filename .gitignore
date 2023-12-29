@@ -21,3 +21,6 @@ tmp.*
 
 # javascript/typscript stuff
 node_modules/
+
+# PSL stuff
+.vscode/environment.json
