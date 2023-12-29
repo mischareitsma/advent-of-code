@@ -1,0 +1,84 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+	/* DOC ----------------------------------------------------------------
+	Day 5 2020
+	** ENDDOC */
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF seats class = void(String) private node = "day5"
+	/* DOC ----------------------------------------------------------------
+	List of steats that are available
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 5
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part1.
+	** ENDDOC */
+
+	type Integer i = 0
+	type Integer maxSeatID = 0
+
+	for i = 1:1:this.getInputSize() {
+		type String boardingPass = this.getInputLine(i)
+
+		type Integer seatID = $$getBinaryNumber(boardingPass, "FL")
+
+		set this.seats(seatID) = ""
+
+		if (seatID > maxSeatID) set maxSeatID = seatID
+	}
+
+	return maxSeatID
+
+
+	// --------------------------------------------------------------------
+private static Integer getBinaryNumber(req String input, req String lowChars)
+	/* DOC ----------------------------------------------------------------
+	Get binary number. Treat the lowChars as 0, the other char is 1.
+	** ENDDOC */
+
+	type Integer b = 0
+	type Integer i = 0
+
+	for i = 1:1:input.length() {
+		set b = b*2 + $select(lowChars.find(input.extract(i)):0, 1:1)
+	}
+
+	return b
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part2.
+	** ENDDOC */
+
+	type Integer mySeat = 0
+
+	type Integer i = 0
+
+	type Integer min = +this.seats("").order()
+	type Integer max = +this.seats("").order(-1)
+
+	for i=min:1:max { quit:(mySeat'=0)
+		if 'this.seats(i).exists() and this.seats(i-1).exists() and this.seats(i+1).exists() set mySeat = i
+	}
+
+	return mySeat

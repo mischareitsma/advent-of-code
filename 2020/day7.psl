@@ -1,0 +1,166 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF allBags class = List private node = "allBags"
+	/* DOC ----------------------------------------------------------------
+	List of all bag IDs.
+	** ENDDOC */
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF bagContents class = void(List, Integer) private node = "bagContents"
+	/* DOC ----------------------------------------------------------------
+	Tree of bag contents. Structure:
+	bagContents(bagName) = List of bags contained
+	bagContents(bagName, containedBag) = number of those bags
+	** ENDDOC */
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF unpackedBags class = void(List, Integer) private node = "unpackedBags"
+	/* DOC ----------------------------------------------------------------
+	Unpacked bag contents. This has a similar structure as the bagContents,
+	but for each bag that has bags inside, this is added to the list of the inital bag content,
+	including it's multiplicity.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 7
+	// set args("test") = ""
+	set args("testSuffix") = 2
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final void processInput()
+	/* DOC ----------------------------------------------------------------
+	Generate the bagContents and unpackedBags arrays.
+	** ENDDOC */
+
+	type Integer i
+
+	set this.allBags = Class.new("List")
+
+	for i = 1:1:this.getInputSize() {
+		type String rule = this.getInputLine(i)
+		type String bagID = rule.piece(" bags contain", 1)
+		
+		do this.allBags.add(bagID)
+
+		set this.bagContents(bagID) = Class.new("List")
+
+		type String contents = rule.piece(" bags contain ", 2)
+
+		type Integer j
+
+		for j = 1:1:contents.length(",") {
+			type String c = contents.piece(", ", j)
+
+			if (c.piece(" ", 1) = "no") quit
+			type Integer n = +c.piece(" ", 1)
+
+			// TODO: (Mischa Reitsma) This can be buggy, I assume all bag IDs are two words (quick glance confirms this)
+			type String id = c.piece(" ", 2, 3)
+
+			do this.bagContents(bagID).add(id)
+			set this.bagContents(bagID, id) = n
+		}
+	}
+
+	for i = 1:1:this.allBags.count() {
+		type void counts(Integer)
+		type String bagID = this.allBags.elementAt(i)
+		
+		set this.unpackedBags(bagID) = Class.new("List")
+
+		do this.addBags(bagID, 1, counts())
+
+		type String idx = counts("").order()
+		while (idx.isNotNull()) {
+
+			if (idx '= bagID) {
+				do this.unpackedBags(bagID).add(idx)
+				set this.unpackedBags(bagID, idx) = counts(idx)
+			}
+
+			set idx = counts(idx).order()
+		}
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private void addBags(req String bagID, req Number number, void counts(Integer))
+	/* DOC ----------------------------------------------------------------
+	TODO: This could break max recursion. Better approach would be to
+	check if the bagID is in unpackedBags, and then just add those!
+
+	Apparently it does not break :-) So keep it, full thing runs less then
+	a second anyway.
+	** ENDDOC */
+
+	set:'counts(bagID).exists() counts(bagID) = 0
+	set counts(bagID) = counts(bagID) + number
+
+	type Integer i = 0
+
+	for i = 1:1:this.bagContents(bagID).count() {
+		type String containedBag = this.bagContents(bagID).elementAt(i)
+		do this.addBags(containedBag, number * this.bagContents(bagID, containedBag), counts())
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	** ENDDOC */
+
+	type literal String GOLD = "shiny gold"
+	type Integer bags = 0
+
+
+	type Integer i
+	
+	for i = 1:1:this.allBags.count() {
+		type String bagID = this.allBags.elementAt(i)
+
+		if (bagID = GOLD) quit
+
+		if this.unpackedBags(bagID).contains(GOLD) set bags = bags + 1
+	}
+
+	return bags
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part 2.
+	** ENDDOC */
+
+	type Integer bags = 0
+
+	type Integer i
+
+	for i = 1:1:this.unpackedBags("shiny gold").count() {
+		type String subBag = this.unpackedBags("shiny gold").elementAt(i)
+
+		set bags = bags + this.unpackedBags("shiny gold", subBag)
+	}
+
+	// 276 too low
+
+	return bags

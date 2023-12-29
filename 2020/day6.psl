@@ -1,0 +1,139 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF answers1 class = void(List) private node = "answers1"
+	/* DOC ----------------------------------------------------------------
+	List of unique answers per group.
+	** ENDDOC */
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF answers2 class = void(List) private node = "answers2"
+	/* DOC ----------------------------------------------------------------
+	List of answers everybody answers
+	** ENDDOC */
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF groups = 0 class = Integer private node = "day6"
+	/* DOC ----------------------------------------------------------------
+	The number of groups encountered.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 6
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final void processInput()
+	/* DOC ----------------------------------------------------------------
+	Process the input, per group add the unique answers.
+	** ENDDOC */
+
+	type Integer i
+
+	type String group = ""
+
+	for i = 1:1:this.getInputSize() {
+		type String line = this.getInputLine(i)
+		if (line = "") {
+			do this.addGroup(group)
+			set group = ""
+		}
+		else {
+			set group = group_ line_ ","
+		}
+	}
+
+	do this.addGroup(group)
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private void addGroup(req String answers)
+	/* DOC ----------------------------------------------------------------
+	
+	** ENDDOC */
+
+	type Integer i = 0
+
+	type List l = Class.new("List")
+
+	set answers = answers.extract(1, answers.length() - 1)
+
+	for i=1:1:answers.length() {
+		type String char = answers.extract(i)
+		if (char '= ",")
+			do l.add(char, false)
+	}
+
+	type List commonAnswers = Class.new("List")
+
+	type String currentPerson = answers.piece(",", 1)
+
+	for i = 1:1:currentPerson.length() {
+		do commonAnswers.add(currentPerson.extract(i))
+	}
+
+	for i = 2:1:answers.length(",") {
+		type Integer j
+		set currentPerson = answers.piece(",", i)
+
+		type List newList = Class.new("List")
+		for j = 1:1:currentPerson.length() {
+			if commonAnswers.contains(currentPerson.extract(j)) do newList.add(currentPerson.extract(j))
+		}
+		set commonAnswers = newList
+	}
+
+	set this.groups = this.groups + 1
+	set this.answers1(this.groups) = l
+	set this.answers2(this.groups) = commonAnswers
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	** ENDDOC */
+
+	type Integer total = 0
+
+	type Integer i
+
+	for i = 1:1:this.groups {
+		set total = total + this.answers1(i).count()
+	}
+
+	return total
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part 2.
+	** ENDDOC */
+
+	type Integer total = 0
+
+	type Integer i
+
+	for i = 1:1:this.groups {
+		set total = total + this.answers2(i).count()
+	}
+
+	return total
