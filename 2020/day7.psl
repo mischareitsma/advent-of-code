@@ -1,7 +1,6 @@
 	#PACKAGE custom.aoc
 	#CLASSDEF public extends = AoC
 
-
 	// --------------------------------------------------------------------
 	#PROPERTYDEF allBags class = List private node = "allBags"
 	/* DOC ----------------------------------------------------------------

@@ -147,7 +147,7 @@ public final String getInputLine(req Integer lineNumber)
 	Get a line number from the input.
 	** ENDDOC */
 
-	if ((lineNumber < 0) or (lineNumber > this.getInputSize())) throw Class.new("Error", %ModuleName_"-E-IndexOutOfBound,"_("Invalid line number, valid range: ]1, "_ this.getInputSize()_ "[").addQuotes())
+	if ((lineNumber < 1) or (lineNumber > this.getInputSize())) throw Class.new("Error", %ModuleName_"-E-IndexOutOfBound,"_("Invalid line number, valid range: ]1, "_ this.getInputSize()_ "[").addQuotes())
 
 	return this.inputLines(lineNumber)
 

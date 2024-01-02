@@ -1,0 +1,138 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF instruction class = void(String) private node = "day8Instructions"
+	#PROPERTYDEF value class = void(Integer) private node = "day8Values"
+	/* DOC ----------------------------------------------------------------
+	Arrays containing the instructions and values.
+	** ENDDOC */
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 8
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final void processInput()
+	/* DOC ----------------------------------------------------------------
+	Copy instructions to instruction an value arrays.
+	** ENDDOC */
+
+	type Integer i
+
+	for i=1:1:this.getInputSize() {
+		type String line = this.getInputLine(i)
+		set this.instruction(i) = line.piece(" ", 1)
+		set this.value(i) = +line.piece(" ", 2)
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution day 8 part 1.
+	** ENDDOC */
+
+	type Boolean isTerminated = false
+
+	return this.accumulate(ret isTerminated)
+
+
+	// --------------------------------------------------------------------
+public final Integer accumulate(req ret Boolean isTerminated)
+	/* DOC ----------------------------------------------------------------
+	Go through list of instructions until either an infnite loop is found or
+	the proram terminates.
+	** ENDDOC */
+
+	type List visited = Class.new("List")
+	type Integer acc = 0
+
+	type Integer i = 1
+
+	type Boolean isLooping = false
+
+	while not (isLooping or isTerminated) {
+
+		do visited.add(i)
+
+		if (this.instruction(i) = "nop") {
+			set i = i + 1
+		}
+		else if (this.instruction(i) = "acc") {
+			set acc = acc + this.value(i)
+			set i = i + 1
+		}
+		else if (this.instruction(i) = "jmp") {
+			set i = i + this.value(i)
+		}
+		else throw Class.new("Error", %ModuleName_"-E-InvalidInstruction,Invalid instruction "_ this.instruction(i)_ " on line "_ i)
+
+		set isLooping = visited.contains(i)
+		set isTerminated = (i > this.getInputSize())
+	}
+
+	return acc
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution day 8 part 2.
+	** ENDDOC */
+
+	type Integer acc
+	type Boolean isTerminated = false
+
+	type Integer i = 0
+
+	while not isTerminated {
+		set i = this.getNextIndex(i)
+
+		do this.flipInstruction(i)
+		set acc = this.accumulate(ret isTerminated)
+		do this.flipInstruction(i)
+
+	}
+
+	return acc
+
+
+	// --------------------------------------------------------------------
+public final void flipInstruction(req Integer idx)
+	/* DOC ----------------------------------------------------------------
+	Flip the instruction from jmp to nop or from nop to jmp.
+	** ENDDOC */
+
+	if this.instruction(idx) = "jmp" set this.instruction(idx) = "nop"
+	else set this.instruction(idx) = "jmp"
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final Integer getNextIndex(req Integer index)
+	/* DOC ----------------------------------------------------------------
+	
+	** ENDDOC */
+
+	set index = index + 1
+
+	while (this.instruction(index) = "acc") {
+		set index = index + 1
+		if (index > this.getInputSize()) throw Class.new("Error", %ModuleName_"-E-NoMoreInstructionsToChange,Index to change is beyond instuction list")
+	}
+
+	return index
