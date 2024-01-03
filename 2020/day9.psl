@@ -1,0 +1,142 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF preambleSize = 25 class = Integer node = "day9" position = 1
+	/* DOC ----------------------------------------------------------------
+	Size of the preamble, for test it is set to 5.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF invalidNumber = 0 class = Integer node = "day9" position = 2
+	/* DOC ----------------------------------------------------------------
+	The invalid number found in part 1
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF numbers class = void(Integer) node = "day9Numbers"
+	/* DOC ----------------------------------------------------------------
+	Input just passed to another array
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF allowedNumbers class = void(List) node = "day9AllowedNumbers"
+	/* DOC ----------------------------------------------------------------
+	Array with for each number after **preambleSize** the combination of
+	numbers that is allowed.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+private void initialize(
+		  req Integer day
+		, req Boolean isTest
+		, req String testSuffix
+		)
+	/* DOC ----------------------------------------------------------------
+	Set preamble size in case isTest is true
+	** ENDDOC */
+
+	if (isTest) set this.preambleSize = 5
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 9
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final void processInput()
+	/* DOC ----------------------------------------------------------------
+	Copy instructions to instruction an value arrays.
+	** ENDDOC */
+
+	type Integer i
+
+	for i=1:1:this.getInputSize() {
+		set this.numbers(i) = this.getInputLine(i)
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution day 9 part 1.
+	** ENDDOC */
+
+	type Integer i, j, k
+
+	for i = 0:1:this.getInputSize()-this.preambleSize-1 {
+		type List cl = Class.new("List")
+		for j = 1:1:this.preambleSize - 1 {
+			for k = j:1:this.preambleSize {
+				do cl.add(this.numbers(i + j) + this.numbers(i + k))
+			}
+		}
+		set this.allowedNumbers(i + this.preambleSize + 1) = cl
+	}
+
+	set i = this.preambleSize
+	type Boolean isValid = true
+
+	while (i < this.getInputSize() and isValid) {
+		set i = i + 1
+		set isValid = this.allowedNumbers(i).contains(this.numbers(i))
+	}
+
+	set this.invalidNumber = this.numbers(i)
+
+	return this.invalidNumber
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part 2.
+	** ENDDOC */
+
+	type Integer i = 0
+	type Integer j = 1
+
+	type Boolean foundSet = false
+
+	while not foundSet {
+		set i = i + 1
+		set j = i + 1
+		type Integer currentSum = this.numbers(i) + this.numbers(j)
+
+		while ((currentSum < this.invalidNumber) and (j < this.getInputSize())) {
+			set j = j + 1
+			set currentSum = currentSum + this.numbers(j)
+		}
+
+		set foundSet = (currentSum = this.invalidNumber)
+	}
+
+	type Integer min = 999999999999999999
+	type Integer max = 0
+
+	type Integer k
+
+	for k = i:1:j {
+		if (this.numbers(k) < min) set min = this.numbers(k)
+		if (this.numbers(k) > max) set max = this.numbers(k)
+	}
+
+	return min + max

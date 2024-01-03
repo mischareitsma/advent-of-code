@@ -1,0 +1,415 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public
+
+
+	/* DOC ----------------------------------------------------------------
+	The 2D grid implementation in PSL.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF width = 0 class = Integer public readonly position = 1
+	#PROPERTYDEF height = 0 class = Integer public readonly position = 2
+	#PROPERTYDEF nElements = 0 class = Integer public readonly position = 3
+	/* DOC ----------------------------------------------------------------
+	Width, height and the product (total number of elements)
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF values class = void(String) private node = "values"
+	/* DOC ----------------------------------------------------------------
+	Array that is storing all the grid values.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF neighbors class = void(List) private node = "neighbors"
+	/* DOC ----------------------------------------------------------------
+	Array with list of neighbor indices. This will be fully populated when
+	calling the [[loadNeighbors() method]], and helps in cases where grids
+	need to iterate a lot of times over all neighbors of the cells. That
+	way, only one time the neighbors are loaded, and the remainder of the
+	iterations the neighborh information will be used.
+
+	This array will also be populated if the loadNeighbors method is not
+	called, but then only when the neighbors are inquired.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+private void initialize(req Integer width, req Integer height, String initValue)
+	/* DOC ----------------------------------------------------------------
+	Initialize all elements.
+	** ENDDOC */
+
+	set this.width = width
+	set this.height = height
+	set this.nElements = width * height
+
+	type Integer i
+	for i = 1:1:this.nElements-1 {
+		set this.values(i) = initValue.get()
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final Grid2D copy()
+	/* DOC ----------------------------------------------------------------
+	Copy a grid. Copies neighbor information if exists.
+	** ENDDOC */
+
+	type Grid2D other = Class.new("Grid2D", this.width, this.height)
+
+	type Integer i
+	for i = 0:1:this.nElements - 1 {
+		set other.values(i) = this.values(i)
+		set:this.neighbors(i).exists() other.neighbors(i) = this.neighbors(i)
+	}
+
+	return other
+
+
+	// --------------------------------------------------------------------
+public final void copyValuesFrom(req Grid2D other)
+	/* DOC ----------------------------------------------------------------
+	Copy all values from another grid.
+	** ENDDOC */
+
+	if (this.width '= other.width) or (this.height '= other.height) throw Class.new("Error", %ModuleName_"-E-GridsNotSameSize,Cannot copy the values from the other grids as the dimension differ")
+
+	type Integer i
+	for i = 0:1:this.nElements - 1 {
+		set this.values(i) = other.values(i)
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final String getValueWithIndex(req Integer index)
+	/* DOC ----------------------------------------------------------------
+	Get an elements from the values array using the index.
+	** ENDDOC */
+
+	return this.values(index)
+
+
+	// --------------------------------------------------------------------
+public final String getValue(req Integer x, req Integer y)
+	/* DOC ----------------------------------------------------------------
+	Get an element from the vlaues array using the x and y coordinate in the
+	grid.
+	** ENDDOC */
+
+	return this.getValueWithIndex(this.getIndexFromCoords(x, y))
+
+
+	// --------------------------------------------------------------------
+public final Integer getIndexFromCoords(req Integer x, req Integer y)
+	/* DOC ----------------------------------------------------------------
+	Translate an x and y coordinate to an index.
+	** ENDDOC */
+
+	return y * this.width + x
+
+
+	// --------------------------------------------------------------------
+public final void getCoordsFromIndex(req Integer index, req ret Integer x, req ret Integer y)
+	/* DOC ----------------------------------------------------------------
+	Get an x and y value from an index.
+	** ENDDOC */
+
+	set x = index # this.width
+	set y = index \ this.width
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final void setValueWithIndex(req Integer index, req String value)
+	/* DOC ----------------------------------------------------------------
+	Set a value in the values array using an index.
+	** ENDDOC */
+
+	do this.checkIndexBounds(index)
+	set this.values(index) = value
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final void setValueWithCoords(req Integer x, req Integer y, req String value)
+	/* DOC ----------------------------------------------------------------
+	Set a value using the grid's X and Y coordinates.
+	** ENDDOC */
+
+	set this.values(this.getIndexFromCoords(x, y)) = value
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final List getNeighborIdxsFromCoords(req Integer x, req Integer y, Boolean includeDiagonals)
+	/* DOC ----------------------------------------------------------------
+	Get a list of neighboring indices using the x and y coordinate of the
+	grid. Can optionally include diagonals. By default only checks up, down,
+	left and right.
+	** ENDDOC */
+
+	type Integer index = this.getIndexFromCoords(x, y)
+
+	return this.getNeighborIndices(x, y, index, includeDiagonals.get(false))
+
+
+	// --------------------------------------------------------------------
+public final List getNeighborIdxsFromIndex(req Integer index, Boolean includeDiagonals)
+	/* DOC ----------------------------------------------------------------
+	Get a list of neighboring indices using the index of the cell in the
+	grid. Can optionally include diagonals. By default only checks up, down,
+	left and right.
+	** ENDDOC */
+
+	type Integer x, y
+
+	do this.getCoordsFromIndex(index, ret x, ret y)
+
+	return this.getNeighborIndices(x, y, index, includeDiagonals.get(false))
+
+
+	// --------------------------------------------------------------------
+private List getNeighborIndices(req Integer x, req Integer y, req Integer index, req Boolean includeDiagonals)
+	/* DOC ----------------------------------------------------------------
+	Check first if the neighbors are loaded. If not, load them. Then return
+	the loaded list.
+	** ENDDOC */
+
+	if not this.neighbors(index).exists() {
+		do this.loadNeighborsOf(x, y, index, includeDiagonals)
+	}
+
+	return this.neighbors(index)
+
+
+	// --------------------------------------------------------------------
+private void loadNeighborsOf(req Integer x, req Integer y, req Integer index, req Boolean includeDiagonals)
+	/* DOC ----------------------------------------------------------------
+	Load the neighbors of the passed coords. This is only called internally,
+	so do not check if already loaded.
+	** ENDDOC */
+
+	type void deltas(String)
+	set deltas(1) = "0,1"
+	set deltas(2) = "-1,0"
+	set deltas(3) = "1,0"
+	set deltas(4) = "0,-1"
+
+	if includeDiagonals {
+		set deltas(5) = "-1,1"
+		set deltas(6) = "1,1"
+		set deltas(7) = "-1,-1"
+		set deltas(8) = "1,-1"
+	}
+
+	type Integer deltaIdx
+
+	type List neighbors = Class.new("List")
+
+	for deltaIdx = 1:1:$select(includeDiagonals:8, 1:4) {
+		type Integer dx = +deltas(deltaIdx).piece(",", 1)
+		type Integer dy = +deltas(deltaIdx).piece(",", 2)
+		type Integer nx = x + dx
+		type Integer ny = y + dy
+		if this.areCoordinatesInBounds(nx, ny) do neighbors.add(this.getIndexFromCoords(nx, ny))
+	}
+
+	set this.neighbors(index) = neighbors
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final void loadCustomNeighbor(req Integer index, req List neighbors)
+	/* DOC ----------------------------------------------------------------
+	Load custom neighbor list using the index of a cell.
+	** ENDDOC */
+
+	do this.checkIndexBounds(index)
+	set this.neighbors(index) = neighbors
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final void loadNeighbors(Boolean includeDiagonals)
+	/* DOC ----------------------------------------------------------------
+	Load all neighborh information. Optionally load also diagonals as
+	neighbors.
+	** ENDDOC */
+
+	type Integer index, x, y
+
+	for index = 0:1:this.nElements - 1 {
+		do this.getCoordsFromIndex(index, ret x, ret y)
+		do this.loadNeighborsOf(x, y, index, includeDiagonals.get(false))
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final Boolean isIndexInBounds(req Integer index)
+	/* DOC ----------------------------------------------------------------
+	Return true if **index** is in bounds, else false.
+	** ENDDOC */
+
+	return (index >= 0) and (index < this.nElements)
+
+
+	// --------------------------------------------------------------------
+private void checkIndexBounds(req Integer index)
+	/* DOC ----------------------------------------------------------------
+	Method that check if the index is in the bounds.
+	** ENDDOC */
+
+	if not this.isIndexInBounds(index) throw Class.new("Error", %ModuleName_ "-E-IndexOutOfBounds,"_("Array index "_ index_ " out of the bounds ]0, "_ this.nElements_ "[").addQuotes())
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private void checkCoordinateBounds(req Integer x, req Integer y)
+	/* DOC ----------------------------------------------------------------
+	Check if the x and y coordinate are in the bounds.
+	** ENDDOC */
+
+	if not this.isXInBounds(x) throw Class.new("Error", %ModuleName_ "-E-XCoordinateOutOfBounds,"_ ("The x-coordinate " _ x_ " is out of bounds ]0, "_ this.width_ "[").addQuotes())
+	if not this.isYInBounds(y) throw Class.new("Error", %ModuleName_ "-E-YCoordinateOutOfBounds,"_ ("The y-coordinate " _ y_ " is out of bounds ]0, "_ this.height_ "[").addQuotes())
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final Boolean isXInBounds(req Integer x)
+	/* DOC ----------------------------------------------------------------
+	Check if the x coorindate is in bounds.
+	** ENDDOC */
+
+	return (x >= 0) and (x < this.width)
+
+
+	// --------------------------------------------------------------------
+public final Boolean isYInBounds(req Integer y)
+	/* DOC ----------------------------------------------------------------
+	Check if the y coorindate is in bounds.
+	** ENDDOC */
+
+	return (y >= 0) and (y < this.height)
+
+
+	// --------------------------------------------------------------------
+public final Boolean areCoordinatesInBounds(req Integer x, req Integer y)
+	/* DOC ----------------------------------------------------------------
+	Check if the x and y coordinates are in bounds.
+	** ENDDOC */
+
+	return this.isXInBounds(x) and this.isYInBounds(y)
+	
+
+	// --------------------------------------------------------------------
+public final Integer getIndexOfCellFromCoords(req Integer x, req Integer y, req Integer dx, req Integer dy)
+	/* DOC ----------------------------------------------------------------
+	Returns the index of a cell moved dx,dy from x, y. Returns -1 if
+	the cell does not exist.
+	** ENDDOC */
+
+	if not this.areCoordinatesInBounds(x + dx, y + dy) return -1
+
+	return this.getIndexFromCoords(x + dx, y + dy)
+
+
+	// --------------------------------------------------------------------
+public final void print()
+	/* DOC ----------------------------------------------------------------
+	Print the grid values. This kinda assumes the grid values are singe
+	characters.
+	** ENDDOC */
+
+	type Integer x, y
+
+	for y = this.height-1:-1:0 {
+		for x = 0:1:this.width-1 {
+			write this.getValue(x, y)
+		}
+		write !
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public static Grid2D getGridFromFile(req String fileName)
+	/* DOC ----------------------------------------------------------------
+	Load a grid from a file. This assumes the file only has the grid in it,
+	and the grid itself are jus single characters, or an empty line
+	seperates the grid from the rest of the file.
+	** ENDDOC */
+
+	type IO io = Class.new("IO")
+	set io.fileName = fileName
+	set io.openParams = "READ"
+	set io.recordSize = PSL.maxStringLength
+
+	type void arr(String)
+	type String idx = 0
+
+	do {
+		catch ioErr {
+			do io.close()
+			if ioErr.ident '= "IOEOF" throw ioErr
+		}
+
+		do io.open()
+
+		type String line = io.read()
+
+		while line.isNotNull() {
+			set idx = idx + 1
+			set arr(idx) = line
+			set line = io.read()
+		}
+
+		do io.close()
+	}
+
+	return Grid2D.getGridFromArray(arr())
+
+
+	// --------------------------------------------------------------------
+public static Grid2D getGridFromArray(req void arr(String))
+	/* DOC ----------------------------------------------------------------
+	Load a grid from an array of lines, where line numbers are used as
+	key. Can be both 0 or 1 as starting number.
+	** ENDDOC */
+
+	type Integer start = +arr("").order()
+	type Integer end = +arr("").order(-1)
+	type Integer height = end - start + 1
+	type Integer width = arr(start).length()
+
+	type Grid2D grid = Class.new("Grid2D", width, height)
+
+	type Integer x, idx
+
+	type Integer y = height
+
+	for idx = start:1:end {
+		set y = y - 1
+		for x = 0:1:width-1 {
+			do grid.setValueWithCoords(x, y, arr(idx).extract(x+1))
+		}
+	}
+
+	return grid

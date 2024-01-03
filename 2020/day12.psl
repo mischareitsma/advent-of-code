@@ -1,0 +1,200 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF seats class = void(void,Boolean) private node = "day11Seats"
+	/* DOC ----------------------------------------------------------------
+	List of adapters
+	** ENDDOC */
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF xMax class = Integer node = "day11" position = 1
+	#PROPERTYDEF yMax class = Integer node = "day11" position = 2
+	/* DOC ----------------------------------------------------------------
+	Width and height of the grid.
+	** ENDDOC */
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 12
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	** ENDDOC */
+
+	type Integer i
+
+	type Row pos = Class.new("Row", "Integer x, Integer y")
+	type Row delta = Class.new("Row", "Integer x, Integer y")
+
+	type void deltas(Row)
+	set deltas("N") = ("0"_9.char()_"1").toRow()
+	set deltas("W") = ("-1"_ 9.char()_"0").toRow()
+	set deltas("E") = ("1"_ 9.char()_"0").toRow()
+	set deltas("S") = ("0"_9.char()_"-1").toRow()
+
+	type void L(String)
+	type void R(String)
+
+	set L("N") = "W"
+	set L("W") = "S"
+	set L("S") = "E"
+	set L("E") = "N"
+	
+	set R("N") = "E"
+	set R("E") = "S"
+	set R("S") = "W"
+	set R("W") = "N"
+
+	type String currDir = "E"
+
+	type Integer x = 0
+	type Integer y = 0
+	type Integer j
+
+	for i = 1:1:this.getInputSize() {
+		type String line = this.getInputLine(i)
+		
+		type String cmd = line.extract(1)
+		type Integer val = +line.extract(2, PSL.maxStringLength)
+
+		if cmd = "L" {
+			for j = 1:1:val\90 {
+				set currDir = L(currDir)
+			}
+		}
+		else if cmd = "R" {
+			for j = 1:1:val\90 {
+				set currDir = R(currDir)
+			}
+		}
+		else {
+			if cmd = "F" set cmd = currDir
+
+			set delta = deltas(cmd)
+			set pos.x = pos.x + (val * delta.x)
+			set pos.y = pos.y + (val * delta.y)
+		}
+	}
+
+	if pos.x < 0 set pos.x = -pos.x
+	if pos.y < 0 set pos.y = -pos.y
+
+	return pos.x + pos.y
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part 2.
+	** ENDDOC */
+
+	type Integer i
+
+	type Row pos = Class.new("Row", "Integer x, Integer y")
+	type Row delta = Class.new("Row", "Integer x, Integer y")
+
+	type void wayPoint(Integer)
+	set wayPoint("N") = 1
+	set wayPoint("W") = 0
+	set wayPoint("E") = 10
+	set wayPoint("S") = 0
+
+	type void deltas(Row)
+	set deltas("N") = ("0"_9.char()_"1").toRow()
+	set deltas("W") = ("-1"_ 9.char()_"0").toRow()
+	set deltas("E") = ("1"_ 9.char()_"0").toRow()
+	set deltas("S") = ("0"_9.char()_"-1").toRow()
+
+	type void L(String)
+	type void R(String)
+
+	set L("N") = "W"
+	set L("W") = "S"
+	set L("S") = "E"
+	set L("E") = "N"
+	
+	set R("N") = "E"
+	set R("E") = "S"
+	set R("S") = "W"
+	set R("W") = "N"
+
+	type String currDir = "E"
+
+	type Integer x = 0
+	type Integer y = 0
+	type Integer j
+
+	type String dir
+
+	for i = 1:1:this.getInputSize() {
+		type String line = this.getInputLine(i)
+		
+		type String cmd = line.extract(1)
+		type Integer val = +line.extract(2, PSL.maxStringLength)
+
+		if cmd = "L" {
+			for j = 1:1:val\90 {
+				type void newWayPoint(Integer)
+				for dir = "N","W","E","S" {
+					set newWayPoint(L(dir)) = wayPoint(dir)
+				}
+				set wayPoint() = newWayPoint()
+			}
+		}
+		else if cmd = "R" {
+			for j = 1:1:val\90 {
+				type void newWayPoint(Integer)
+				for dir = "N","W","E","S" {
+					set newWayPoint(R(dir)) = wayPoint(dir)
+				}
+				set wayPoint() = newWayPoint()
+			}
+		}
+		else if cmd = "F" {
+			for dir = "N","W","E","S" {
+				set delta = deltas(dir)
+				set pos.x = pos.x + (val * wayPoint(dir) * delta.x)
+				set pos.y = pos.y + (val * wayPoint(dir) * delta.y)
+			}
+		}
+		else {
+			set wayPoint(cmd) = wayPoint(cmd) + val
+			if wayPoint(cmd) < 0 {
+				if cmd = "N" {
+					set wayPoint("S") = -wayPoint("N")
+					set wayPoint("N") = 0
+				}
+				if cmd = "S" {
+					set wayPoint("N") = -wayPoint("S")
+					set wayPoint("S") = 0
+				}
+				if cmd = "W" {
+					set wayPoint("E") = -wayPoint("W")
+					set wayPoint("W") = 0
+				}
+				if cmd = "E" {
+					set wayPoint("W") = -wayPoint("E")
+					set wayPoint("E") = 0
+				}
+			}
+		}
+	}
+
+	if pos.x < 0 set pos.x = -pos.x
+	if pos.y < 0 set pos.y = -pos.y
+
+	return pos.x + pos.y

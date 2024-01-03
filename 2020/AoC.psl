@@ -7,21 +7,21 @@
 
 
 	// --------------------------------------------------------------------
-	#PROPERTYDEF day = 0 class = Integer private node = "aoc" position = 1
+	#PROPERTYDEF day = 0 class = Integer protected readonly node = "aoc" position = 1
 	/* DOC ----------------------------------------------------------------
 	Day to run.
 	** ENDDOC */
 
 
 	// --------------------------------------------------------------------
-	#PROPERTYDEF isTest = true class = Boolean private node = "aoc" position = 2
+	#PROPERTYDEF isTest = true class = Boolean protected readonly node = "aoc" position = 2
 	/* DOC ----------------------------------------------------------------
 	Flag that indicates the run uses the test input.
 	** ENDDOC */
 
 
 	// --------------------------------------------------------------------
-	#PROPERTYDEF testSuffix = "" class = String private node = "aoc" position = 3
+	#PROPERTYDEF testSuffix = "" class = String protected readonly node = "aoc" position = 3
 	/* DOC ----------------------------------------------------------------
 	The test number to run in case the run is using test input, and there
 	are multiple test examples.

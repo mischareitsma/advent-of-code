@@ -1,0 +1,176 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF seats class = Grid2D private node = "day11Seats"
+	/* DOC ----------------------------------------------------------------
+	List of adapters
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 11
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final void processInput()
+	/* DOC ----------------------------------------------------------------
+	Process the inputs.
+	** ENDDOC */
+
+	type static Grid2D
+
+	type void input(String)
+
+	type Integer i
+
+	for i = 1:1:this.getInputSize() {
+		set input(i) = this.getInputLine(i)
+	}
+
+	set this.seats = Grid2D.getGridFromArray(input())
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	** ENDDOC */
+
+
+	type Grid2D seats = this.seats.copy()
+	do seats.loadNeighbors(true)
+
+	return this.solve(seats, 4)
+
+	// --------------------------------------------------------------------
+public final Integer solve(req Grid2D seats, req Integer maxTaken)
+	/* DOC ----------------------------------------------------------------
+	Solve for seats.
+	** ENDDOC */
+
+	type literal String FLOOR = "."
+	type literal String FREE = "L"
+	type literal String TAKEN = "#"
+
+	type Grid2D newSeats = seats.copy()
+
+	// Set to 1 to kickstart the while.
+	type Integer seatsChanged = 1
+
+	type Integer index
+
+	while (seatsChanged > 0) {
+
+		set seatsChanged = 0
+
+		for index = 0:1:seats.nElements - 1 {
+			type String cell = seats.getValueWithIndex(index)
+
+			if (cell = FLOOR) quit
+
+			type List nb = seats.getNeighborIdxsFromIndex(index)
+
+			type Integer nbIdx
+
+			type Integer nTaken = 0
+
+			for nbIdx = 1:1:nb.count() {
+				type String nbCell = seats.getValueWithIndex(nb.elementAt(nbIdx))
+
+				if (nbCell = TAKEN) set nTaken = nTaken + 1
+			}
+
+			if (cell = FREE) and (nTaken = 0) {
+				do newSeats.setValueWithIndex(index, TAKEN)
+				set seatsChanged = seatsChanged + 1
+			}
+			if (cell = TAKEN) and (nTaken >= maxTaken) {
+				do newSeats.setValueWithIndex(index, FREE)
+				set seatsChanged = seatsChanged + 1
+			}
+		}
+
+		do seats.copyValuesFrom(newSeats)
+		// do seats.print()
+
+		// write !!
+	}
+
+	type Integer seatsTaken = 0
+
+	for index = 0:1:seats.nElements - 1 {
+		if (seats.getValueWithIndex(index) = TAKEN) set seatsTaken = seatsTaken + 1
+	}
+
+	return seatsTaken
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part 2.
+	** ENDDOC */
+
+	type literal String FLOOR = "."
+	type literal String FREE = "L"
+	type literal String TAKEN = "#"
+
+	type Grid2D seats = this.seats.copy()
+
+	type void deltas(String)
+	set deltas(1) = "0,1"
+	set deltas(2) = "-1,0"
+	set deltas(3) = "1,0"
+	set deltas(4) = "0,-1"
+	set deltas(5) = "-1,1"
+	set deltas(6) = "1,1"
+	set deltas(7) = "-1,-1"
+	set deltas(8) = "1,-1"
+
+	type Integer x, y
+
+	for y = 0:1:seats.height - 1 {
+		for x = 0:1:seats.width - 1 {
+			type Integer index = seats.getIndexFromCoords(x, y)
+			type List nb = Class.new("List")
+
+			type Integer deltaIdx
+
+			for deltaIdx = 1:1:8 {
+				type Integer dx = +deltas(deltaIdx).piece(",", 1)
+				type Integer dy = +deltas(deltaIdx).piece(",", 2)
+
+				type Integer nx = x
+				type Integer ny = y
+
+				type Boolean reachedEnd = false
+				type Boolean seatFound = false
+
+				while not (reachedEnd or seatFound) {
+					set nx = nx + dx
+					set ny = ny + dy
+					set reachedEnd = 'seats.areCoordinatesInBounds(nx, ny)
+					if ('reachedEnd) set seatFound = (seats.getValue(nx, ny) = FREE)
+				}
+
+				if (seatFound) do nb.add(seats.getIndexFromCoords(nx, ny))
+			}
+			
+			do seats.loadCustomNeighbor(index, nb)
+		}
+	}
+
+	return this.solve(seats, 5)
