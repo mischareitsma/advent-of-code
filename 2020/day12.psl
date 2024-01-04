@@ -172,25 +172,12 @@ public final String part2()
 			}
 		}
 		else {
+			/*
+			Used to have if wayPoint(cmd) < 0 then flip to other side, but
+			that is fine, a negative value times the delta of that direction is
+			the other direciton.
+			*/
 			set wayPoint(cmd) = wayPoint(cmd) + val
-			if wayPoint(cmd) < 0 {
-				if cmd = "N" {
-					set wayPoint("S") = -wayPoint("N")
-					set wayPoint("N") = 0
-				}
-				if cmd = "S" {
-					set wayPoint("N") = -wayPoint("S")
-					set wayPoint("S") = 0
-				}
-				if cmd = "W" {
-					set wayPoint("E") = -wayPoint("W")
-					set wayPoint("W") = 0
-				}
-				if cmd = "E" {
-					set wayPoint("W") = -wayPoint("E")
-					set wayPoint("E") = 0
-				}
-			}
 		}
 	}
 

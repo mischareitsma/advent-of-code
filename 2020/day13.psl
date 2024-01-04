@@ -1,0 +1,133 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF time class = Integer private node = "day13" position = 1
+	/* DOC ----------------------------------------------------------------
+	Time we arrive at bus stop.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF busses class = List private node = "day13Busses"
+	/* DOC ----------------------------------------------------------------
+	The busses that are in service.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF fullListBusses class = List private node = "day13FullList"
+	/* DOC ----------------------------------------------------------------
+	Full second input line as list.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 13
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final void processInput()
+	/* DOC ----------------------------------------------------------------
+	Process the two input lines.
+	** ENDDOC */
+
+	set this.time = +this.getInputLine(1)
+
+	set this.busses = Class.new("List")
+
+	set this.fullListBusses = {List}(this.getInputLine(2))
+
+	type String busses = this.getInputLine(2)
+	type Integer i
+
+	for i = 1:1:this.fullListBusses.count() {
+		type String bus = this.fullListBusses.elementAt(i)
+
+		if (bus = "x") quit
+
+		do this.busses.add(bus)
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	** ENDDOC */
+
+	type Integer departureTime = 999999999999999999
+	type Integer busID = 0
+
+	type Integer i
+	for i = 1:1:this.busses.count() {
+		type Integer bus = this.busses.elementAt(i)
+		type Integer t = ((this.time \ bus) + 1) * bus
+
+		if (t < departureTime) {
+			set departureTime = t
+			set busID = bus
+		}
+	}
+
+	return (departureTime - this.time) * busID
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part 2.
+
+	Noted that all numbers are prime, so just increment time by
+	the first number you find, then check if the others follow the pattern
+	(e.g. n + offset # id = 0). If so, we found a match and now we can start
+	incrementing by firstNumber * thisNumber. Do this trick untill all
+	match.
+	** ENDDOC */
+
+	type void offsetToBusses(Integer)
+	type void bussesToOffset(Integer)
+
+	type Integer i
+
+	for i = 1:1:this.fullListBusses.count() {
+		type String bus = this.fullListBusses.elementAt(i)
+		if (bus = "x") quit
+
+		set offsetToBusses(i-1) = +bus
+		set bussesToOffset(+bus) = i - 1
+	}
+
+	// Just pick the first time as start, 0 is weird, 1 as well because
+	// we want multiples of that first bus.
+
+	type Integer previousBus = +this.busses.elementAt(1)
+	type Integer currentTime = previousBus
+	type Integer currentDelta = previousBus
+
+	for i = 2:1:this.busses.count() {
+		type Integer bus = +this.busses.elementAt(i)
+
+		while ((currentTime + bussesToOffset(bus)) # bus '= 0) {
+			set currentTime = currentTime + currentDelta
+			if (this.isTest and (currentTime > 1068781)) throw Class.new("Error", %ModuleName_"-E-BreachedExpectedLimit,Breached the expected test answers of 1068781")
+		}
+
+		// Found the match, increase delta
+		set currentDelta = currentDelta * bus
+	}
+
+	return currentTime
