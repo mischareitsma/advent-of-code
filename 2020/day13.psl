@@ -91,7 +91,7 @@ public final String part2()
 	/* DOC ----------------------------------------------------------------
 	Solution part 2.
 
-	Noted that all numbers are prime, so just increment time by
+	Noticed that all numbers are prime, so just increment time by
 	the first number you find, then check if the others follow the pattern
 	(e.g. n + offset # id = 0). If so, we found a match and now we can start
 	incrementing by firstNumber * thisNumber. Do this trick untill all

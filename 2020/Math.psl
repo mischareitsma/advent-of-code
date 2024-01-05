@@ -1,0 +1,19 @@
+	#PACKAGE custom.aoc.utils
+	#CLASSDEF public
+
+
+	// --------------------------------------------------------------------
+public static Integer sumIntArray(req void arr(Integer))
+	/* DOC ----------------------------------------------------------------
+	Sum the entries in an integer array.
+	** ENDDOC */
+
+	type Integer sum = 0
+	type String idx = arr("").order()
+
+	while idx.isNotNull() {
+		set sum = sum + arr(idx)
+		set idx = arr(idx).order()
+	}
+
+	return sum

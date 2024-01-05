@@ -1,0 +1,82 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 15
+	set args("test") = ""
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	** ENDDOC */
+
+	type Integer solution = 0
+
+	if this.isTest {
+		type Integer i
+		for i = 1:1:this.getInputSize() {
+			type String start = this.getInputLine(i)
+			type Integer currentSolution = this.solve({List}start, 2020)
+			write "Starting numbers: "_ start_", 2020th number: "_ currentSolution,!
+			if (solution = 0) set solution = currentSolution
+		}
+	}
+
+	set solution = this.solve({List}(this.getInputLine(1)), 2020)
+
+	return solution
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part 2.
+	** ENDDOC */
+
+	return this.solve({List}(this.getInputLine(1)), 30000000)
+
+
+	// --------------------------------------------------------------------
+public final Integer solve(req List startNumbers, req Integer nthNumber)
+	/* DOC ----------------------------------------------------------------
+	return the n'th number
+	** ENDDOC */
+
+	type void previous(Integer)
+
+	type Integer i = 0
+
+	for i = 1:1:startNumbers.count() {
+		set previous(startNumbers.elementAt(i)) = i
+	}
+	set i = i + 1
+
+	type Integer n = 0
+	type Integer previousOccurence
+	while (i < nthNumber) {
+		set previousOccurence = previous(n).get(0)
+		set previous(n) = i
+
+		if previousOccurence > 0 {
+			set n = i - previousOccurence
+		}
+		else {
+			set n = 0
+		}
+	
+		set i = i + 1
+	}
+
+	return n

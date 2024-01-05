@@ -1,0 +1,209 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF intToBinMemo class = void(String) node = "day14itob"
+	/* DOC ----------------------------------------------------------------
+	Memoize for integers to binary format. Assume all masks have the same
+	size, so int as key is enough, no need for int and size as keys.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF binToIntMemo class = void(Integer) node = "day14btoi"
+	/* DOC ----------------------------------------------------------------
+	Binary string to itneger memoization.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 14
+	// set args("test") = ""
+	set args("testSuffix") = 2
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1
+	** ENDDOC */
+
+	type static Math
+
+	type String mask = ""
+	type void memory(Integer)
+
+	type Integer i
+
+	for i = 1:1:this.getInputSize() {
+		type String line = this.getInputLine(i)
+
+		if line.beginsWith("mask") {
+			set mask = line.piece(" = ", 2)
+		}
+		else {
+			type Integer memoryAddress = +line.extract(line.find("["), line.find("]")-2)
+			type Integer value = +line.piece(" = ", 2)
+			set memory(memoryAddress) = this.transformValue(value, mask)
+		}
+	}
+
+	return Math.sumIntArray(memory())
+
+
+	// --------------------------------------------------------------------
+private Integer transformValue(req Integer value, req String mask)
+	/* DOC ----------------------------------------------------------------
+	Apply mask to value and return new value.
+	** ENDDOC */
+
+	type String binaryValue = this.intToBin(value, mask.length())
+
+	type Integer i
+
+	for i = 1:1:mask.length() {
+		if mask.extract(i) = "X" quit
+
+		set binaryValue.extract(i) = mask.extract(i)
+	}
+
+	return this.binToInt(binaryValue)
+
+
+	// --------------------------------------------------------------------
+private String intToBin(req Integer value, req Integer size)
+	/* DOC ----------------------------------------------------------------
+	Transform integer value to binary string. Prepend with 0 untill size
+	is reached.
+	** ENDDOC */
+
+	if not this.intToBinMemo(value).exists() {
+		type String bin = ""
+
+		type Integer tempValue = value
+
+		while (tempValue > 0) {
+			type Integer currVal = tempValue # 2
+			set bin = bin_ currVal
+			set tempValue = tempValue \ 2
+		}
+
+		set this.intToBinMemo(value) = bin.justify(size, -1, "0").reverse()
+	}
+
+	return this.intToBinMemo(value)
+
+
+	// --------------------------------------------------------------------
+private Integer binToInt(req String binaryValue)
+	/* DOC ----------------------------------------------------------------
+	Transform binary representation to Integer.
+	** ENDDOC */
+
+	if not this.binToIntMemo(binaryValue).exists() {
+		type Integer value = 0
+
+		type Integer i
+
+		for i = 1:1:binaryValue.length() {
+			set value = (value * 2) + binaryValue.extract(i)
+		}
+
+		set this.binToIntMemo(binaryValue) = value
+
+	}
+
+	return this.binToIntMemo(binaryValue)
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Part 2.
+	** ENDDOC */
+
+	type static Math
+
+	type String mask = ""
+	type void memory(Integer)
+
+	type Integer i
+
+	for i = 1:1:this.getInputSize() {
+		type String line = this.getInputLine(i)
+
+		if line.beginsWith("mask") {
+			set mask = line.piece(" = ", 2)
+		}
+		else {
+			type Integer memoryAddress = +line.extract(line.find("["), line.find("]")-2)
+			type Integer value = +line.piece(" = ", 2)
+
+			type List memoryAddresses = this.getMemoryAddresses(this.intToBin(memoryAddress, mask.length()), mask)
+			type Integer i
+			for i = 1:1:memoryAddresses.count() {
+				set memory(memoryAddresses.elementAt(i)) = value
+			}
+		}
+	}
+
+	return Math.sumIntArray(memory())
+
+
+	// --------------------------------------------------------------------
+private List getMemoryAddresses(req String address, req String mask)
+	/* DOC ----------------------------------------------------------------
+	Expand memory address using the mask.
+	** ENDDOC */
+
+
+	type Integer i, j
+	for i = 1:1:mask.length() {
+		if (mask.extract(i) = "0") quit
+
+		set address.extract(i) = mask.extract(i)
+	}
+
+	type void addresses(String)
+	type Integer n = 1
+	set addresses(n) = address
+
+	for i = 1:1:address.length("X") {
+		type void newAddresses(String)
+		type Integer m = 0
+
+		for j = 1:1:n {
+			type String currAddress = addresses(j)
+			type Integer idx = currAddress.find("X")
+			set m = m+1
+			set newAddresses(m) = currAddress
+			set newAddresses(m).extract(idx-1) = "0"
+			set m = m+1
+			set newAddresses(m) = currAddress
+			set newAddresses(m).extract(idx-1) = "1"
+		}
+
+		set n = m
+		set addresses() = newAddresses()
+	}
+
+	type List memoryAddresses = Class.new("List")
+
+	type String idx = addresses("").order()
+
+	while idx.isNotNull() {
+		do memoryAddresses.add(this.binToInt(addresses(idx)))
+		set idx = addresses(idx).order()
+	}
+
+	return memoryAddresses
