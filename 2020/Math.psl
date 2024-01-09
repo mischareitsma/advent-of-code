@@ -17,3 +17,30 @@ public static Integer sumIntArray(req void arr(Integer))
 	}
 
 	return sum
+
+
+	// --------------------------------------------------------------------
+public static Integer sumIntList(req List l)
+	/* DOC ----------------------------------------------------------------
+	Sum the entries of an array of integers.
+	** ENDDOC */
+
+	type Integer sum = 0
+
+	type Integer i
+
+	for i = 1:1:l.count() {
+		set sum = sum + l.elementAt(i)
+	}
+
+	return sum
+
+
+	// --------------------------------------------------------------------
+public static Boolean inRange(req Integer n, req Integer min, req Integer max)
+	/* DOC ----------------------------------------------------------------
+	Check if number **n** is in the range if ]**min**, **max**[ (inclusive),
+	so min <= n <= max.
+	** ENDDOC */
+
+	return (n >= min) and (n <= max)

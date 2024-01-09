@@ -1,0 +1,227 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF ranges class = void(void, void, Integer) private node = "day16Ranges"
+	/* DOC ----------------------------------------------------------------
+	Ranges for the fields. Example:
+	ranges("row",1,"min") = 1
+	ranges("row",1,"max") = 3
+	ranges("row",2,"min") = 5
+	ranges("row",2,"max") = 10
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF fieldNames = "" class = List private node = "day16FieldNames"
+	/* DOC ----------------------------------------------------------------
+	List of all field names.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF myTicket = "" class = List private node = "day16" position = 1
+	/* DOC ----------------------------------------------------------------
+	My ticket numbers.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF numberOfTickets = 0 class = List private node = "day16" position = 2
+	/* DOC ----------------------------------------------------------------
+	The list of total other tickets.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF invalidNumbers = 0 class = Integer private node = "day16" position = 3
+	/* DOC ----------------------------------------------------------------
+	The sum of invalid numbers for part 1.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF validTickets = "" class = List private node = "day16ValidTickets"
+	/* DOC ----------------------------------------------------------------
+	List of valid tickets.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF identifiedFields = "" class = List private node = "day16IdentifiedFields"
+	/* DOC ----------------------------------------------------------------
+	List of field IDs that have been identified.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF otherTickets class = void(List) private node = "day16OtherTickets"
+	/* DOC ----------------------------------------------------------------
+	Other ticket numbers.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF validFields class = void(void, Boolean) private node = "day16ValidFields"
+	/* DOC ----------------------------------------------------------------
+	Map of valid fields. Format:
+	validFields(fieldNumber, fieldName) = true/false, where fieldnumber is the number in the ticket, fieldName is the name of the field.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 16
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+	
+
+	// --------------------------------------------------------------------
+public final void processInput()
+	/* DOC ----------------------------------------------------------------
+	Process the input data.
+	** ENDDOC */
+
+	type static Math
+
+	type Integer i, j, k
+	set i = 1
+	type String line = this.getInputLine(i)
+
+	while line.isNotNull() {
+		type String fieldName = line.piece(": ", 1)
+		type String range1 = line.piece(": ", 2).piece(" or ", 1)
+		type String range2 = line.piece(": ", 2).piece(" or ", 2)
+
+		do this.fieldNames.add(fieldName)
+
+		set this.ranges(fieldName,1,"min") = range1.piece("-", 1)
+		set this.ranges(fieldName,1,"max") = range1.piece("-", 2)
+		set this.ranges(fieldName,2,"min") = range2.piece("-", 1)
+		set this.ranges(fieldName,2,"max") = range2.piece("-", 2)
+		set i = i + 1
+		set line = this.getInputLine(i)
+	}
+
+	set i = i + 2
+	set this.myTicket = {List}(this.getInputLine(i))
+
+	set i = i + 2
+	
+	while (i < this.getInputSize()) {
+		set this.numberOfTickets = this.numberOfTickets + 1
+		set i = i + 1
+		set this.otherTickets(this.numberOfTickets) = {List}(this.getInputLine(i))
+	}
+
+	type Integer N = this.myTicket.count()
+
+	// Initialize the map
+	for i = 1:1:N {
+		for j = 1:1:N {
+			set this.validFields(i, this.fieldNames.elementAt(j)) = true
+		}
+	}
+
+	// Start processing tickets, filtering out the invalid ones.
+	for i=1:1:this.numberOfTickets {
+		type List ticket = this.otherTickets(i)
+
+		type Boolean isValidTicket = true
+
+		for j = 1:1:N {
+			type Integer ticketValue = ticket.elementAt(j)
+			type Boolean isValidValue = false
+			for k = 1:1:N {
+				type String fieldName = this.fieldNames.elementAt(k)
+				if (Math.inRange(ticketValue, this.ranges(fieldName, 1, "min"), this.ranges(fieldName, 1, "max")) or Math.inRange(ticketValue, this.ranges(fieldName, 2, "min"), this.ranges(fieldName, 2, "max"))) {
+					set isValidValue = true
+				}
+			}
+			if not isValidValue {
+				set isValidTicket = false
+				set this.invalidNumbers = this.invalidNumbers + ticketValue
+			}
+		}
+
+		if isValidTicket {
+			do this.validTickets.add(i)
+			for j = 1:1:N {
+				type Integer ticketValue = ticket.elementAt(j)
+				for k = 1:1:N {
+					type String fieldName = this.fieldNames.elementAt(k)
+					if not (Math.inRange(ticketValue, this.ranges(fieldName, 1, "min"), this.ranges(fieldName, 1, "max")) or Math.inRange(ticketValue, this.ranges(fieldName, 2, "min"), this.ranges(fieldName, 2, "max"))) {
+						set this.validFields(j, fieldName) = false
+					}
+				}
+			}
+		}
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	** ENDDOC */
+
+	return this.invalidNumbers
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part 2.
+	** ENDDOC */
+
+	type Integer N = this.myTicket.count()
+	type Integer i,j
+	type Integer result = 1
+	type List fieldsMapped = ""
+	type String fieldName, lastFieldName
+
+	type void map(Integer)
+
+	while (fieldsMapped.count() '= N) {
+		
+
+		for i = 1:1:N {
+			type Integer nValid = 0
+			if fieldsMapped.contains(i) quit
+			for j = 1:1:N {
+				set fieldName = this.fieldNames.elementAt(j)
+				if (this.validFields(i, fieldName)) {
+					set lastFieldName = fieldName
+					set nValid = nValid + 1
+				}
+			}
+
+			if (nValid = 1) {
+				do fieldsMapped.add(i)
+				set map(lastFieldName) = i
+
+				for j = 1:1:N {
+					if (j = i) quit
+					set this.validFields(j, lastFieldName) = false
+				}
+			}
+		}
+	}
+
+	set fieldName = ""
+
+	for  set fieldName = map(fieldName).order() quit:fieldName.isNull()  {
+		if fieldName.beginsWith("departure") set result = result * this.myTicket.elementAt(map(fieldName))
+	}
+
+	return result
