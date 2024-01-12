@@ -1,0 +1,332 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF messages class = void(String) private node = "day19Messages"
+	/* DOC ----------------------------------------------------------------
+	Array of messages.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF instructions class = void(String) private node = "day19Instructions"
+	/* DOC ----------------------------------------------------------------
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF instructionsMemo class = void(Integer,String) private node = "day19InstMemoized"
+	/* DOC ----------------------------------------------------------------
+	Memoization of instruction solutions. Stucture:
+
+	arr(inst) = n
+	arr(inst,1) = solution1
+	arr(inst,n) = solutionN
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF numberOfMessages = -1 class = Integer private node = "day19" position = 1
+	#PROPERTYDEF numberOfInstructions = -1 class = Integer private node = "day19" position = 2
+	/* DOC ----------------------------------------------------------------
+	Number of messages and instructions. This time (in contrast to other
+	days), use 0-based indexing. That is why initializing to -1.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF possibleMessages class = void(String) private node = "day19PossibleMessages"
+	/* DOC ----------------------------------------------------------------
+	Array with all possible messages.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 19
+	set args("testSuffix") = 2
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final void processInput()
+	/* DOC ----------------------------------------------------------------
+	Process the inputs. Create the instructions and the messages arrays.
+	** ENDDOC */
+
+	type Integer i = 1
+	type String line = this.getInputLine(i)
+
+	while (line.isNotNull()) {
+		set this.instructions(+line) = $$formatInstructions(line.piece(": ", 2))
+		set i = i + 1
+		set line = this.getInputLine(i)
+	}
+
+	while (i < this.getInputSize()) {
+		set i = i + 1
+		set this.numberOfMessages = this.numberOfMessages + 1
+		set this.messages(this.numberOfMessages) = this.getInputLine(i)
+	}
+
+	set this.numberOfInstructions = this.instructions("").order(-1)
+
+	do this.constructPossibleMessages()
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private static String formatInstructions(req String line)
+	/* DOC ----------------------------------------------------------------
+	Format the instructions. Format is:
+	type + value.
+	** ENDDOC */
+
+	return line.replace(" | ", "|").translate(" ", ",").translate("""", "")
+
+
+	// --------------------------------------------------------------------
+public final void constructPossibleMessages()
+	/* DOC ----------------------------------------------------------------
+	
+	** ENDDOC */
+
+
+	type Integer i = 0
+
+	// Find and add a and b to memo
+	for  set i = this.instructions(i).order() quit:i.isNull()  {
+		type String inst = this.instructions(i)
+		if (inst = "a") or (inst = "b") {
+			set this.instructionsMemo(i) = 1
+			set this.instructionsMemo(i, 1) = inst
+		}
+	}
+
+	set i = 0
+
+	for  set i = this.instructions(i).order() quit:i.isNull()  {
+
+		do this.mapInstruction(i)
+
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final void mapInstruction(req Integer i)
+	/* DOC ----------------------------------------------------------------
+	Map a single instruction.
+	** ENDDOC */
+
+	if this.instructionsMemo(i).exists() quit
+
+	type String instruction = this.instructions(i)
+
+	type Integer j, k, l
+
+	type Integer nMemo = 0
+
+	for j = 1:1:instruction.length("|") {
+		type String subInst = instruction.piece("|", j)
+		for k = 1:1:subInst.length(",") {
+			type String c = subInst.piece(",", k)
+
+			// Should never happen, as we already memoized a and b.
+			if ('c.isNumber()) quit
+
+			do this.mapInstruction(c)
+		}
+
+		if (subInst.length(",") = 1) {
+			for k = 1:1:this.instructionsMemo(subInst) {
+				set nMemo = nMemo + 1
+				set this.instructionsMemo(i, nMemo) = this.instructionsMemo(subInst, k)
+			}
+		}
+		else {
+			type Integer c1 = subInst.piece(",", 1)
+			type Integer c2 = subInst.piece(",", 2)
+			for k = 1:1:this.instructionsMemo(c1) {
+				 
+				for l = 1:1:this.instructionsMemo(c2) {
+					set nMemo = nMemo + 1
+					set this.instructionsMemo(i, nMemo) = this.instructionsMemo(c1,k)_this.instructionsMemo(c2,l)
+				}
+			}
+		}
+	}
+
+	set this.instructionsMemo(i) = nMemo
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	** ENDDOC */
+
+	if ('this.isTest or (this.testSuffix = 2)) return this.solve(true)
+
+	type Integer i, j, k, n = 0
+
+	type void c(Integer)
+
+	for i = 1:1:this.instructions(0).length(",") {
+		set c(i) = this.instructions(0).piece(",", i)
+	}
+
+	for i = 1:1:this.instructionsMemo(c(1)) {
+		for j = 1:1:this.instructionsMemo(c(2)) {
+			// test has 3 instructions, non-test 2. Bit hacky, but this works
+			// At part 2, even hackyer: only for testSuffix 1
+			if (this.isTest and (this.testSuffix = 1)) {
+				for k = 1:1:this.instructionsMemo(c(3)) {
+					set this.possibleMessages(this.instructionsMemo(c(1), i)_ this.instructionsMemo(c(2), j)_ this.instructionsMemo(c(3), k)) = ""
+				}
+			}
+			else {
+				set this.possibleMessages(this.instructionsMemo(c(1), i)_ this.instructionsMemo(c(2), j)) = ""
+			}
+		}
+	}
+
+	for i = 0:1:this.numberOfMessages {
+		if this.possibleMessages(this.messages(i)).exists() set n = n + 1
+	}
+
+	return n
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Final solution?
+	** ENDDOC */
+
+	return this.solve(false)
+
+
+	// --------------------------------------------------------------------
+private Integer solve(req Boolean solvePart1)
+	/* DOC ----------------------------------------------------------------
+	General solution
+	** ENDDOC */
+
+	type Integer matches = 0
+
+	type Integer i, j
+
+	type void combos31(String)
+	type void combos42(String)
+
+	for i = 1:1:this.instructionsMemo(31) {
+		set combos31(this.instructionsMemo(31, i)) = ""
+	}
+
+	for i = 1:1:this.instructionsMemo(42) {
+		set combos42(this.instructionsMemo(42, i)) = ""
+	}
+
+	type Integer cLen = this.getMinLengthOf(42) // Explore says chunck length = 5 for test 8 for non-test. len42 and 31 are same.
+
+	for i = 0:1:this.numberOfMessages {
+		type String fullMsg = this.messages(i)
+		type void msg(Integer)
+
+		type Integer N = fullMsg.length / cLen
+
+		type Boolean isValid = true
+
+		for j = 1:1:N quit:'isValid  {
+			type String submsg = fullMsg.extract((j-1) * cLen + 1, j * cLen)
+			if not (combos42(submsg).exists() or combos31(submsg).exists()) set isValid = false quit
+			set msg(j) = $select(combos42(submsg).exists():42, 1:31)
+		}
+
+		if not isValid quit
+		if (msg(1) '= 42) quit
+		if (msg(N) '= 31) quit
+
+		if (solvePart1 = 1) { quit
+			if (N '= 3) quit
+			if (msg(1) '= 42) quit
+			if (msg(2) '= 42) quit
+			if (msg(3) '= 31) quit
+			set matches = matches + 1
+		}
+
+		type Integer n = 0
+		type Boolean reached42 = false
+
+		for j = N:-1:1 quit:'isValid  {
+			if (reached42 and (msg(j) = 31)) set isValid = false
+			set reached42 = (msg(j) = 42)
+			if (msg(j) = 31) set n = n + 1
+			else set n = n - 1
+		}
+
+		if (isValid and (n > -1)) set isValid = false
+
+		if isValid set matches = matches + 1
+	}
+
+
+	return matches
+
+
+	// --------------------------------------------------------------------
+private void explore()
+	/* DOC ----------------------------------------------------------------
+	Explore some stuff. Keep here for future reference on how part2 is
+	solved :-).
+	** ENDDOC */
+
+	type Integer i
+
+	type Integer len42 = this.getMinLengthOf(42)
+	type Integer len31 = this.getMinLengthOf(31)
+
+	write "Length of 42: "_ len42,!
+	write "Length of 31: "_ len31,!
+
+	for i = 0:1:this.numberOfMessages {
+		write "Message "_ i_ ", length: "_ this.messages(i).length()_", len mod "_ len42_": "_ (this.messages(i).length() # len42),!
+	}
+
+	type void combos42(String)
+
+	for i = 1:1:this.instructionsMemo(42) {
+		set combos42(this.instructionsMemo(42, i)) = ""
+	}
+
+	for i = 1:1:this.instructionsMemo(31) {
+		if combos42(this.instructionsMemo(31, i)).exists() write this.instructionsMemo(31, i)_ " is in both 42 and 31",!
+	}
+
+	write "Done exploring",!
+
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private Integer getMinLengthOf(req Integer i)
+	/* DOC ----------------------------------------------------------------
+	Get the minimal length of one of the possible values in the memo.
+	Actually, there is no asymmetry, all entries have the same size.
+	** ENDDOC */
+
+	return this.instructionsMemo(i, 1).length()

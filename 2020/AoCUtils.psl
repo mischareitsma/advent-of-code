@@ -1,0 +1,21 @@
+	#PACKAGE custom.aoc.utils
+	#CLASSDEF public
+
+
+	// --------------------------------------------------------------------
+public final Integer getFirstNumber(req List l)
+	/* DOC ----------------------------------------------------------------
+	Get first numeric value in list of strings.
+	** ENDDOC */
+
+	type Integer i = 0
+	type Boolean found = false
+
+	while (i < l.count() and 'found) {
+		set i = i + 1
+		set found = l.elementAt(i).isNumber()
+	}
+
+	if ('found) set i = 0
+
+	return i

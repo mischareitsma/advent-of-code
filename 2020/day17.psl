@@ -1,0 +1,346 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF cubes class = void(void, void, Boolean) node = "day17Cubes"
+	#PROPERTYDEF nextCubes class = void(void, void, Boolean) node = "day17NextCubes"
+	#PROPERTYDEF inactiveNeighbors class = void(void, void, Boolean) node = "day17InactiveNeighbors"
+	/* DOC ----------------------------------------------------------------
+	Various arrays of cubes.
+	** ENDDOC */
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF hyperCubes class = void(void, void, void, Boolean) node = "day17HyperCubes"
+	#PROPERTYDEF nextHyperCubes class = void(void, void, void, Boolean) node = "day17NextHyperCubes"
+	#PROPERTYDEF inactiveHyperNeighbors class = void(void, void, void, Boolean) node = "day17InactiveHyperNeighbors"
+	/* DOC ----------------------------------------------------------------
+	Various arrays of cubes.
+	** ENDDOC */
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 17
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+	
+
+	// --------------------------------------------------------------------
+public final void processInput()
+	/* DOC ----------------------------------------------------------------
+	Process the input data.
+	** ENDDOC */
+
+	type Integer x, y, z
+
+	set z = 0
+
+	for y = 1:1:this.getInputSize() {
+		type String line = this.getInputLine(y)
+		for x = 1:1:line.length() {
+			set this.cubes(x, y, 0) = (line.extract(x) = "#")
+			set this.hyperCubes(x, y, 0, 0) = this.cubes(x, y, 0)
+		}
+	}
+
+	do this.pruneFalse()
+	do this.hyperPruneFalse()
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	- If a cube is active and exactly 2 or 3 of its neighbors are also
+	  active, the cube remains active. Otherwise, the cube becomes inactive.
+	- If a cube is inactive but exactly 3 of its neighbors are active, the
+	  cube becomes active. Otherwise, the cube remains inactive.
+	** ENDDOC */
+
+	type Integer i
+
+	for i = 1:1:6 {
+		do this.cycle()
+	}
+
+	type Integer x = "", y = "", z = "", nActive = 0
+	for  set x = this.cubes(x).order() quit:x.isNull()  {
+		for  set y = this.cubes(x, y).order() quit:y.isNull()  {
+			for  set z = this.cubes(x, y, z).order() quit:z.isNull()  {
+				set nActive = nActive + 1
+			}
+		}
+	}
+
+	return nActive
+
+
+	// --------------------------------------------------------------------
+private void cycle()
+	/* DOC ----------------------------------------------------------------
+	- If a cube is active and exactly 2 or 3 of its neighbors are also
+	  active, the cube remains active. Otherwise, the cube becomes inactive.
+	- If a cube is inactive but exactly 3 of its neighbors are active, the
+	  cube becomes active. Otherwise, the cube remains inactive.
+	** ENDDOC */
+
+	type Integer x = "", y = "", z = ""
+
+	for  set x = this.cubes(x).order() quit:x.isNull()  {
+		for  set y = this.cubes(x, y).order() quit:y.isNull()  {
+			for  set z = this.cubes(x, y, z).order() quit:z.isNull()  {
+				type Integer nActive = this.getActiveNeighbors(x, y, z, true)
+
+				if (nActive = 2) or (nActive = 3) {
+					set this.nextCubes(x, y, z) = true
+				}
+			}
+		}
+	}
+
+	for  set x = this.inactiveNeighbors(x).order() quit:x.isNull()  {
+		for  set y = this.inactiveNeighbors(x, y).order() quit:y.isNull()  {
+			for  set z = this.inactiveNeighbors(x, y, z).order() quit:z.isNull()  {
+				if (this.getActiveNeighbors(x, y, z, false) = 3) set this.nextCubes(x, y, z) = true
+			}
+		}
+	}
+
+	kill this.inactiveNeighbors
+	set this.cubes(,,) = this.nextCubes(,,)
+	kill this.nextCubes
+
+	do this.pruneFalse()
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private Integer getActiveNeighbors(req Integer x, req Integer y, req Integer z, req Boolean addNeighborsAsInactive)
+	/* DOC ----------------------------------------------------------------
+	Get active neighhbors.
+	** ENDDOC */
+
+	type Integer dx, dy, dz
+	type Integer nx, ny, nz
+
+	type Integer n = 0
+
+	for dx = -1, 0, 1 {
+		for dy = -1, 0, 1 {
+			for dz = -1, 0, 1 {
+				if ((dx = 0) and (dy = 0) and (dz = 0)) quit
+				set nx = x + dx
+				set ny = y + dy
+				set nz = z + dz
+
+				if not this.cubes(nx, ny, nz).exists() and addNeighborsAsInactive set this.inactiveNeighbors(nx, ny, nz) = false
+				if this.cubes(nx, ny, nz).get(false) set n = n + 1
+			}
+		}
+	}
+
+	return n
+
+
+	// --------------------------------------------------------------------
+private void pruneFalse()
+	/* DOC ----------------------------------------------------------------
+	Prune all **false** values form the cubes array.
+	** ENDDOC */
+
+	type Integer x = "", y = "", z = ""
+
+	for  set x = this.cubes(x).order() quit:x.isNull()  {
+		for  set y = this.cubes(x, y).order() quit:y.isNull()  {
+			for  set z = this.cubes(x, y, z).order() quit:z.isNull()  {
+				if not this.cubes(x, y, z) kill this.cubes(x, y, z)
+			}
+		}
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private void printLayers(Integer cycle)
+	/* DOC ----------------------------------------------------------------
+	Print all layers.
+	** ENDDOC */
+
+	type literal Integer MAX = 999999999999999999
+
+	type Integer xmin = MAX
+	type Integer xmax = -MAX
+	type Integer ymin = MAX
+	type Integer ymax = -MAX
+	type Integer zmin = MAX
+	type Integer zmax = -MAX
+
+	type Integer x="", y="", z=""
+
+	for  set x = this.cubes(x).order() quit:x.isNull()  {
+		if (x < xmin) set xmin = x
+		if (x > xmax) set xmax = x
+		for  set y = this.cubes(x, y).order() quit:y.isNull()  {
+			if (y < ymin) set ymin = y
+			if (y > ymax) set ymax = y
+			for  set z = this.cubes(x, y, z).order() quit:z.isNull()  {
+				if (z < zmin) set zmin = z
+				if (z > zmax) set zmax = z
+			}
+		}
+	}
+
+	write "Cycle: "_ cycle.get(0),!
+
+	for z = zmin:1:zmax {
+		write "z = "_ z,!
+
+		for x = xmin:1:xmax {
+			for y = ymin:1:ymax {
+				write $select(this.cubes(x, y, z).exists():"#", 1:".")
+			}
+			write !
+		}
+		write !
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part 2.
+	** ENDDOC */
+
+	type Integer i
+	
+	for i = 1:1:6 {
+		do this.hyperCycle()
+	}
+
+	type Integer x = "", y = "", z = "", w = "", nActive = 0
+	for  set x = this.hyperCubes(x).order() quit:x.isNull()  {
+		for  set y = this.hyperCubes(x, y).order() quit:y.isNull()  {
+			for  set z = this.hyperCubes(x, y, z).order() quit:z.isNull()  {
+				for  set w = this.hyperCubes(x, y, z, w).order() quit:w.isNull()  {
+					set nActive = nActive + 1
+				}
+			}
+		}
+	}
+
+	return nActive
+
+
+	// --------------------------------------------------------------------
+private void hyperPruneFalse()
+	/* DOC ----------------------------------------------------------------
+	Prune all **false** values form the hyperCubes array.
+	** ENDDOC */
+
+	type Integer x = "", y = "", z = "", w = ""
+
+	for  set x = this.hyperCubes(x).order() quit:x.isNull()  {
+		for  set y = this.hyperCubes(x, y).order() quit:y.isNull()  {
+			for  set z = this.hyperCubes(x, y, z).order() quit:z.isNull()  {
+				for  set w = this.hyperCubes(x, y, z, w).order() quit:w.isNull()  {
+					if not this.hyperCubes(x, y, z, w) kill this.hyperCubes(x, y, z, w)
+				}
+			}
+		}
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private Integer getHyperActiveNeighbors(
+		  req Integer x
+		, req Integer y
+		, req Integer z
+		, req Integer w
+		, req Boolean addNeighborsAsInactive
+		)
+	/* DOC ----------------------------------------------------------------
+	Get active neighhbors.
+	** ENDDOC */
+
+	type Integer dx, dy, dz, dw
+	type Integer nx, ny, nz, nw
+
+	type Integer n = 0
+
+	for dx = -1, 0, 1 {
+		for dy = -1, 0, 1 {
+			for dz = -1, 0, 1 {
+				for dw = -1, 0, 1 {
+					if ((dx = 0) and (dy = 0) and (dz = 0) and (dw = 0)) quit
+					set nx = x + dx
+					set ny = y + dy
+					set nz = z + dz
+					set nw = w + dw
+
+					if not this.hyperCubes(nx, ny, nz, nw).exists() and addNeighborsAsInactive set this.inactiveHyperNeighbors(nx, ny, nz, nw) = false
+					if this.hyperCubes(nx, ny, nz, nw).get(false) set n = n + 1
+				}
+			}
+		}
+	}
+
+	return n
+
+
+	// --------------------------------------------------------------------
+private void hyperCycle()
+	/* DOC ----------------------------------------------------------------
+	- If a cube is active and exactly 2 or 3 of its neighbors are also
+	  active, the cube remains active. Otherwise, the cube becomes inactive.
+	- If a cube is inactive but exactly 3 of its neighbors are active, the
+	  cube becomes active. Otherwise, the cube remains inactive.
+	** ENDDOC */
+
+	type Integer x = "", y = "", z = "", w = ""
+
+	for  set x = this.hyperCubes(x).order() quit:x.isNull()  {
+		for  set y = this.hyperCubes(x, y).order() quit:y.isNull()  {
+			for  set z = this.hyperCubes(x, y, z).order() quit:z.isNull()  {
+				for  set w = this.hyperCubes(x, y, z, w).order() quit:w.isNull()  {
+					type Integer nActive = this.getHyperActiveNeighbors(x, y, z, w, true)
+
+					if (nActive = 2) or (nActive = 3) {
+						set this.nextHyperCubes(x, y, z, w) = true
+					}
+				}
+			}
+		}
+	}
+
+	for  set x = this.inactiveHyperNeighbors(x).order() quit:x.isNull()  {
+		for  set y = this.inactiveHyperNeighbors(x, y).order() quit:y.isNull()  {
+			for  set z = this.inactiveHyperNeighbors(x, y, z).order() quit:z.isNull()  {
+				for  set w = this.inactiveHyperNeighbors(x, y, z, w).order() quit:w.isNull()  {
+					if (this.getHyperActiveNeighbors(x, y, z, w, false) = 3) set this.nextHyperCubes(x, y, z, w) = true
+				}
+			}
+		}
+	}
+
+	kill this.inactiveHyperNeighbors
+	set this.hyperCubes(,,,) = this.nextHyperCubes(,,,)
+	kill this.nextHyperCubes
+
+	do this.hyperPruneFalse()
+
+	quit

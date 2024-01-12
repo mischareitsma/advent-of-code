@@ -1,0 +1,153 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 18
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+	
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	** ENDDOC */
+
+	type Integer result = 0
+
+	type Integer i = 0
+
+	for i = 1:1:this.getInputSize() {
+		type String line = this.getInputLine(i)
+		type Integer sum = $$runExpression(line)
+		if (this.isTest) write line_ " = "_ sum,!
+		set result = result + sum
+
+	}
+
+	return result
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part 2.
+	** ENDDOC */
+
+	type Integer result = 0
+
+	type Integer i = 0
+
+	for i = 1:1:this.getInputSize() {
+		type String line = this.getInputLine(i)
+		type Integer sum = $$runAdvancedExpression(line)
+		if (this.isTest) write line_ " = "_ sum,!
+		set result = result + sum
+
+	}
+
+	return result
+
+
+	// --------------------------------------------------------------------
+public static Integer runExpression(req String expression)
+	/* DOC ----------------------------------------------------------------
+	Lol, this is just the order of precedence of PSL / Mumps.
+	** ENDDOC */
+
+	set expression = expression.translate(" ", "")
+
+	return @expression
+
+
+	// --------------------------------------------------------------------
+public static Integer runAdvancedExpression(req String expression)
+	/* DOC ----------------------------------------------------------------
+	Run the advanced case, + goes before *. Not too tricky. First do all
+	+, then do all (), then do the rest. Parsing is the hardest bit.
+
+	Different approach: Withing branches we call itself
+	((5 + 8 + 3) + 3) + (3 + 9 * 7) will call itself with ((5 + 8 + 3) + 3)
+	which will call itself with (5 + 8 + 3) and then add it to 3.
+	Then per statement string, we first process all the pluses, and reduce
+	the expression to only multiplication, and then do @expression.
+	** ENDDOC */
+
+	/*
+	((5 + 8 + 3) + 3) + (3 + 9 * 7)
+	*/
+
+	type String newExpression = ""
+	set expression = expression.translate(" ", "")
+
+	// Used to get the digits out, just translate all non-+ operators to +,
+	// and then do a find to the next +.
+	type String findExpression = expression.translate("()*","+++")
+
+	type Integer previousValue = ""
+	type Boolean prevIsPlus = false
+
+	type String idx = 0
+
+	while (idx < expression.length()) {
+		set idx = idx + 1
+		type String currentChar = expression.extract(idx)
+
+		if (currentChar = "*") {
+			set newExpression = newExpression_previousValue_"*"
+			set previousValue = ""
+		}
+		else if (currentChar = "+") {
+			set prevIsPlus = true
+		}
+		else if (currentChar = "(") {
+			// set idx = idx + 1
+			type Integer cbIdx = expression.find(")", idx + 1) - 1
+			
+			type String subExpression = expression.extract(idx, cbIdx)
+
+			while (subExpression.length("(") '= subExpression.length(")")) {
+				set cbIdx = expression.find(")", cbIdx + 1) - 1
+				set subExpression = expression.extract(idx, cbIdx)
+			}
+
+			type Integer newNumber = $$runAdvancedExpression(subExpression.extract(2, subExpression.length() - 1))
+			set idx = cbIdx
+
+			if prevIsPlus {
+				set previousValue = previousValue + newNumber
+				set prevIsPlus = false
+			}
+			else {
+				set previousValue = newNumber
+			}
+		}
+		else {
+			// We are a digit now, so just extract it
+			type Integer endIdx = findExpression.find("+",idx) - 1
+			if (endIdx = -1) set endIdx = expression.length() + 1
+			type Integer newNumber = +expression.extract(idx, endIdx-1)
+			set idx = endIdx - 1
+
+			if prevIsPlus {
+				set previousValue = previousValue + newNumber
+				set prevIsPlus = false
+			}
+			else {
+				set previousValue = newNumber
+			}
+		}
+	}
+
+	// Could end with a previous value, need to append
+	set newExpression = newExpression_ previousValue
+
+	return @newExpression
