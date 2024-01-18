@@ -1,0 +1,235 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF ingredients = "" class = List private node = "day21ingredients"
+	#PROPERTYDEF allergens = "" class = List private node = "day21allergens"
+	/* DOC ----------------------------------------------------------------
+	List of all unique ingredients and allergens.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF foodIngredients class = void(List) private node = "day21foodIngredients"
+	/* DOC ----------------------------------------------------------------
+	List of ingredients per food.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF foodAllergens class = void(List) private node = "day21foodAllergens"
+	/* DOC ----------------------------------------------------------------
+	List of algergens per food.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF ingredientAllergens class = void(String) private node = "day21IngerdientAllergens"
+	/* DOC ----------------------------------------------------------------
+	Key-value pars of ingredient to allergen. Ingredients can have no
+	allergens, which means that they will have an empty string as value.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF allergenIngredients class = void(List) private node = "day21AllergenIngredients"
+	/* DOC ----------------------------------------------------------------
+	List of possible ingredients that contain the allergen.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF ingredientInFood class = void(List) private node = "day21ingredientInFood"
+	/* DOC ----------------------------------------------------------------
+	List of foods that contain the ingredient.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF allergenInFood class = void(List) private node = "day21allergenInFood"
+	/* DOC ----------------------------------------------------------------
+	List of foods that contain the allergen.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF nFoods = 0 class = Integer private node = "day21" position = 1
+	/* DOC ----------------------------------------------------------------
+	Number of foods.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 21
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final void processInput()
+	/* DOC ----------------------------------------------------------------
+	Process the inputs. Create the instructions and the messages arrays.
+	** ENDDOC */
+
+	type Integer i, j, k, food
+	set this.nFoods = this.getInputSize()
+	for i = 1:1:this.nFoods {
+		type String line = this.getInputLine(i)
+		set this.foodIngredients(i) = {List}(line.piece(" (", 1).translate(" ", ","))
+		set this.foodAllergens(i) = {List}(line.piece("(contains", 2).piece(")",1).translate(" ", ""))
+	}
+
+	do this.clearInput()
+
+	type String ingredient, allergen
+
+	for i = 1:1:this.nFoods {
+		for j = 1:1:this.foodIngredients(i).count() {
+			set ingredient = this.foodIngredients(i).elementAt(j)
+			do this.ingredients.add(ingredient, false)
+			if ('this.ingredientAllergens(ingredient).exists()) set this.ingredientAllergens(ingredient) = ""
+			if ('this.ingredientInFood(ingredient).exists()) set this.ingredientInFood(ingredient) = Class.new("List")
+			do this.ingredientInFood(ingredient).add(i)
+		}
+
+		for j = 1:1:this.foodAllergens(i).count() {
+			set allergen = this.foodAllergens(i).elementAt(j)
+			do this.allergens.add(allergen, false, true)
+			if ('this.allergenInFood(allergen).exists()) set this.allergenInFood(allergen) = Class.new("List")
+			do this.allergenInFood(allergen).add(i)
+		}
+	}
+
+	for i = 1:1:this.allergens.count() {
+		set allergen = this.allergens.elementAt(i)
+		set this.allergenIngredients(allergen) = this.foodIngredients(this.allergenInFood(allergen).elementAt(1))
+		for j = 2:1:this.allergenInFood(allergen).count() {
+			set food = this.allergenInFood(allergen).elementAt(j)
+			type List newPossibleIngredients = Class.new("List")
+			type List ingredients = this.foodIngredients(food)
+			for k = 1:1:ingredients.count() {
+				set ingredient = ingredients.elementAt(k)
+				if this.allergenIngredients(allergen).contains(ingredient) do newPossibleIngredients.add(ingredient)
+			}
+			set this.allergenIngredients(allergen) = newPossibleIngredients
+		}
+		if (this.allergenIngredients(allergen).count() = 1) {
+			set ingredient = this.allergenIngredients(allergen).elementAt(1)
+			set this.ingredientAllergens(ingredient) = allergen
+			do this.pruneFromPossibleLists(ingredient)
+		}
+	}
+
+	// TODO: (Mischa Reitsma) This feels buggy, the first iteration should in the recursive pruneFromPossibleList calls fix it?
+	// Note: probably buggy due to the kickstart and the loop above. We should from the kickstart already remove identified ingredients. That could solve it.
+	// Still the solutions works,a nd runs on 0.012 seconds for process inputs and 0.00 for both part 1 and 2 :-)
+	type Integer n = this.getAmbiguousAllergens()
+	type Integer max = 20
+	type Integer iter = 0
+
+	// xecute "zwrite this"
+
+	while ((iter < max) and (n > 0)) {
+		set iter = iter + 1
+		for  set allergen = this.allergenIngredients(allergen).order() quit:allergen.isNull()  {
+			if (this.allergenIngredients(allergen).count() > 1) quit
+			do this.pruneFromPossibleLists(this.allergenIngredients(allergen).elementAt(1))
+		}
+		set n = this.getAmbiguousAllergens()
+	}
+
+	if (n > 0) throw Class.new("Error", %ModuleName_"-E-StillAmbiguous,Still allergens that are not mapped to ingredients")
+
+	// xecute "zwrite this"
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public Integer getAmbiguousAllergens()
+	/* DOC ----------------------------------------------------------------
+	Get number of ambiguous allergens, which have more than 1 potential
+	ingredient.
+	** ENDDOC */
+
+	type Integer n = 0
+	type String allergen = ""
+	for  set allergen = this.allergenIngredients(allergen).order() quit:allergen.isNull()  {
+		if (this.allergenIngredients(allergen).count() > 1) set n = n + 1
+	}
+
+	return n
+
+
+	// --------------------------------------------------------------------
+private void pruneFromPossibleLists(req String ingredient)
+	/* DOC ----------------------------------------------------------------
+	Prune ingredient from possible lists.
+	** ENDDOC */
+
+	type String allergen = ""
+
+	for  set allergen = this.allergenIngredients(allergen).order() quit:allergen.isNull()  {
+		if 'this.allergenIngredients(allergen).contains(ingredient) quit
+		if (this.allergenIngredients(allergen).count() = 1) quit
+
+		type List newList = Class.new("List")
+		type Integer i
+		for i = 1:1:this.allergenIngredients(allergen).count() {
+			if (this.allergenIngredients(allergen).elementAt(i) '= ingredient) do newList.add(this.allergenIngredients(allergen).elementAt(i))
+		}
+		set this.allergenIngredients(allergen) = newList
+		if (newList.count() = 1) {
+			type String nextIngredient = this.allergenIngredients(allergen).elementAt(1)
+			set this.ingredientAllergens(nextIngredient) = allergen
+			do this.pruneFromPossibleLists(nextIngredient)
+		}
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	** ENDDOC */
+
+	type Integer i
+	type Integer n = 0
+
+	type String ingredient
+
+	for i = 1:1:this.ingredients.count() {
+		set ingredient = this.ingredients.elementAt(i)
+		if (this.ingredientAllergens(ingredient).isNull()) set n = n + this.ingredientInFood(ingredient).count()
+	}
+
+	return n
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part 2
+	** ENDDOC */
+
+	type List ingredientList = Class.new("List")
+
+	type String allergen
+	type Integer i
+
+	for i = 1:1:this.allergens.count() {
+		set allergen = this.allergens.elementAt(i)
+		if (this.allergenIngredients(allergen).count() = 1) do ingredientList.add(this.allergenIngredients(allergen).elementAt(1))
+	}
+
+	return {String}ingredientList
