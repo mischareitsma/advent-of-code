@@ -163,6 +163,18 @@ protected void processInput()
 
 
 	// --------------------------------------------------------------------
+public final void clearInput()
+	/* DOC ----------------------------------------------------------------
+	Clear all the input data.
+	** ENDDOC */
+
+	kill this.inputLines
+	set this.inputSize = 0
+
+	quit
+
+
+	// --------------------------------------------------------------------
 public final void main()
 	/* DOC ----------------------------------------------------------------
 	Main method to start execution of a day.

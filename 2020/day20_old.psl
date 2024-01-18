@@ -1,0 +1,485 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF tiles class = void(void,String,String) private node = "day20tiles"
+	/* DOC ----------------------------------------------------------------
+	Tile info:
+
+	tiles(tileID, ROWS, row#) = "row"
+	tiles(tileID, SIDES, #) = "side"
+	tiles(tileID, SIDEID, side) = #
+	tiles(tileID, NEIGHBORS) = "csv of tile IDs"
+	tiles(tileID, POSITION) = "int row, int column"
+	tiles(tileID, ROTATEDSIDE, "u/l/r/d") = side
+	tiles(tileID, OPERATIONS) = "list of operations"
+
+	operations are:
+	h: horizontal mirror
+	v: vertical mirror
+	r: rotate by 90 degrees
+	List of operations performed on the picture is also what is done to get
+	the rotated sides.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF ROWS = "ROWS" class = String private literal
+	#PROPERTYDEF NEIGHBORS = "NEIGHBORS" class = String private literal
+	#PROPERTYDEF POSITION = "POSITION" class = String private literal
+	#PROPERTYDEF SIDES = "SIDES" class = String private literal
+	#PROPERTYDEF SIDEID = "SIDEID" class = String private literal
+	#PROPERTYDEF ROTATEDSIDE = "ROTATEDSIDE" class = String private literal
+	#PROPERTYDEF NEIGHBORSIDEIDS = "NEIGHBORSIDEIDS" class = String private literal
+	#PROPERTYDEF NEIGHBORSIDEID = "NEIGHBORSIDEID" class = String private literal
+	#PROPERTYDEF TRANSFROM = "TRANSFORM" class = String private literal
+	/* DOC ----------------------------------------------------------------
+	Literal values used in the tiles array as second key.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF tileSize = 0 class = Integer private node = "day20" position = 1
+	#PROPERTYDEF size = 0 class = Integer private node = "day20" position = 2
+	/* DOC ----------------------------------------------------------------
+	Dimensions of one tile and dimensions of the entire picture. Picture
+	is square root of number of tiles.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF nTiles = 0 class = Integer private node = "day20" position = 3
+	/* DOC ----------------------------------------------------------------
+	Total number of tiles.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF tileIDs = "" class = List private node = "day20TileIDs"
+	/* DOC ----------------------------------------------------------------
+	List of tile IDs.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF tilesWithSides class = void(List) node = "day20TileSides"
+	/* DOC ----------------------------------------------------------------
+	Array with as keys a side in string form, and as value a list of tiles
+	that have that side.	
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 20
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final void processInput()
+	/* DOC ----------------------------------------------------------------
+	
+	** ENDDOC */
+
+	type Integer i, j, k
+
+	type String tileID = ""
+	type Integer rowNumber = 0
+	set this.tileSize = this.getInputLine(2).length()
+	set this.tileIDs = Class.new("List")
+
+	for i = 1:1:this.getInputSize() {
+		type String line = this.getInputLine(i)
+		if line.isNull() quit
+		if line.beginsWith("Tile") { quit
+			set tileID = +line.piece(" ", 2)
+			set rowNumber = 0
+			set this.nTiles = this.nTiles + 1
+			do this.tileIDs.add(tileID)
+		}
+
+		set rowNumber = rowNumber + 1
+		set this.tiles(tileID, this.ROWS, this.tileSize - rowNumber + 1) = line
+	}
+
+	for i = 1:1:this.nTiles {
+		set tileID = this.tileIDs.elementAt(i)
+		
+		set this.tiles(tileID, this.SIDES, 1) = this.tiles(tileID, this.ROWS, 1)
+		set this.tiles(tileID, this.SIDES, 2) = this.tiles(tileID, this.ROWS, this.tileSize)
+
+		type String left = ""
+		type String right = ""
+
+		for j = 1:1:this.tileSize {
+			set left = left_ this.tiles(tileID, this.ROWS, j).extract(1)
+			set right = right_ this.tiles(tileID, this.ROWS, j).extract(this.tileSize)
+		}
+
+		set this.tiles(tileID, this.SIDES, 3) = left
+		set this.tiles(tileID, this.SIDES, 4) = right
+		set this.tiles(tileID, this.SIDES, 5) = this.tiles(tileID, this.SIDES, 1).reverse()
+		set this.tiles(tileID, this.SIDES, 6) = this.tiles(tileID, this.SIDES, 2).reverse()
+		set this.tiles(tileID, this.SIDES, 7) = left.reverse()
+		set this.tiles(tileID, this.SIDES, 8) = right.reverse()
+
+		for j = 1:1:8 {
+			type String side = this.tiles(tileID, this.SIDES, j)
+			set this.tiles(tileID, this.SIDEID, side) = j
+			if not this.tilesWithSides(side).exists() {
+				set this.tilesWithSides(side) = tileID
+			}
+			else {
+				do this.tilesWithSides(side).add(tileID)
+			}
+		}
+
+	}
+
+	for i = 1:1:this.nTiles {
+		set tileID = this.tileIDs.elementAt(i)
+		for j = 1:1:8 {
+			type String side = this.tiles(tileID, this.SIDES, j)
+			type List tilesWithSide = this.tilesWithSides(side)
+			for k = 1:1:tilesWithSide.count() {
+				type Integer id = tilesWithSide.elementAt(k)
+				if (id = tileID) quit
+
+				if this.tiles(tileID, this.NEIGHBORSIDEIDS, id).exists() {
+					set this.tiles(tileID, this.NEIGHBORSIDEIDS, id) = this.tiles(tileID, this.NEIGHBORSIDEIDS, id)_ ","_ j
+				}
+				else {
+					set this.tiles(tileID, this.NEIGHBORSIDEIDS, id) = j
+				}
+				
+				if not this.tiles(tileID, this.NEIGHBORS).exists() {
+					set this.tiles(tileID, this.NEIGHBORS) = id
+				}
+				else {
+					if this.tiles(tileID, this.NEIGHBORS).contains(id) quit
+					set this.tiles(tileID, this.NEIGHBORS) = this.tiles(tileID, this.NEIGHBORS)_ ","_ id
+				}
+			}
+		}
+	}
+
+	// Just check the number of tiles, no fancy sqrt or reuse other code
+	if (this.isTest) set this.size = 3
+	else set this.size = 12
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	** ENDDOC */
+
+	type Integer result = 1
+
+	type Integer i
+	for i = 1:1:this.nTiles {
+		type String id = this.tileIDs.elementAt(i)
+		if ((this.tiles(id, this.NEIGHBORS)).length(",") = 2) set result = result * id
+	}
+
+	return result
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part 2.
+	** ENDDOC */
+
+
+	type void picture(String)
+
+	do this.constructPicture(picture())
+	return ""
+
+	type void seaMonster(String)
+	set seaMonster(1) = "                  # "
+	set seaMonster(2) = "#    ##    ##    ###"
+	set seaMonster(3) = " #  #  #  #  #  #   "
+
+	type Integer n = 0 // Number of seamonsters.
+
+	type Boolean foundMonster = false
+
+	type void currentPicture(String)
+	set currentPicture() = picture()
+	
+	type Integer variety = -1
+
+	while ('foundMonster) {
+		set variety = variety + 1
+		if (variety >= 12) throw Class.new("Error", %ModuleName_"-E-NoMonstersFound,No monsters found in any variety")
+		do createVariety(variety, picture(), currentPicture())
+		set n = $$countSeaMonsters(currentPicture(), seaMonster())
+		set foundMonster = (n > 0)
+
+	}
+
+	return $$countHashes(picture()) - (n * $$countHashes(seaMonster()))
+
+
+	// --------------------------------------------------------------------
+private static Integer countHashes(req void arr(String))
+	/* DOC ----------------------------------------------------------------
+	Count all the hashes in the strings in the array.
+	** ENDDOC */
+
+	type Integer i
+	type Integer n = 0
+	for i = 1:1:arr("").order(-1) {
+		set n = n + arr(i).length("#") - 1
+	}
+
+	return n
+
+
+	// --------------------------------------------------------------------
+public static void createVariety(
+		  req Integer variety
+		, req void picture(String)
+		, req void currentPicture(String)
+		)
+	/* DOC ----------------------------------------------------------------
+	Create variety Varieties are in sets of 4 (4 rotations), might have
+	some overlap. And then with vertical mirror, with horizontal mirror.
+
+	We used to have double mirror as variety 3, but double mirror = rotate
+	180, so no use.
+
+	1: normal
+	2: rotated 90
+	3: rotated 180
+	** ENDDOC */
+
+	type Integer mirror = variety \ 4
+	type Integer rotations = variety # 4
+
+	set currentPicture() = picture()
+
+
+	type Integer n = currentPicture(1).length()
+	type Integer i
+
+	if (mirror = 1) {
+		for i = 1:1:n {
+			set currentPicture(i) = currentPicture(i).reverse()
+		}
+	}
+	if (mirror = 2) {
+		type void tmpPic(String)
+		for i = 1:1:n {
+			set tmpPic(n - i + 1) = currentPicture(i)
+			set currentPicture() = tmpPic()
+		}
+
+	}
+
+	if (rotations = 0) quit
+
+	for i = 1:1:rotations {
+		// lol, had the same in tetris. There are ways to do -90, +90 and +/- 180, so could make it faster.
+		do rotate(currentPicture())
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private static void rotate(req void arr(String))
+	/* DOC ----------------------------------------------------------------
+	Rotate with 90 degrees clockwise.
+	** ENDDOC */
+
+	type void newArr(String)
+
+	type Integer n = arr(1).length()
+
+	type Integer i, j
+	for i = 1:1:n {
+		set newArr(i) = ""
+	}
+
+	// Transpose => rows go to columns, so newArr(i) = arr
+	for i = 1:1:n {
+		for j = 1:1:n {
+			set newArr(i) = newArr(i)_ arr(j).extract(i)
+		}
+	}
+
+	for i = 1:1:n {
+		set arr(i) = newArr(i).reverse()
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private static Integer countSeaMonsters(
+		  req void picture(String)
+		, req void seaMonster(String)
+		)
+	/* DOC ----------------------------------------------------------------
+	Count sea monsters.
+	** ENDDOC */
+
+	type Integer i, j
+
+	type Integer n = 0
+
+	type Integer len = picture(1).length()
+	type Integer l = seaMonster(1).length()
+
+	type void smCoords(String)
+
+	type Integer k = 0
+
+	for i = 1:1:l {
+		for j = 1:1:3 {
+			if (seaMonster(j).extract(i)) = "#" {
+				set k = k + 1
+				set smCoords(k) = i_","_j
+			}
+		}
+	}
+
+	for i = 1:1:n-2 {
+		for j = 1:1:n-l {
+			type Boolean found = true
+
+			for k = 1:1:smCoords("").order(-1) quit:'found  {
+				type Integer dx = +smCoords(k).piece(",", 1) - 1
+				type Integer dy = +smCoords(k).piece(",", 2) - 1
+				set found = (picture(i + dy).extract(j + dx) = "#")
+			}
+
+			if (found) set n = n + 1
+		}
+	}
+
+	return n
+
+
+	// --------------------------------------------------------------------
+public void constructPicture(void arr(String))
+	/* DOC ----------------------------------------------------------------
+	
+	** ENDDOC */
+
+	type Integer i, j
+	type void idMap(void, Integer)
+
+
+	// Get first corner, and then just go left to right
+	type Integer id
+	type Boolean foundCorner = false
+	for i = 1:1:this.tileIDs.count() quit:foundCorner  {
+		set id = this.tileIDs.elementAt(i)
+		set foundCorner = (this.tiles(id, this.NEIGHBORS).length(",") = 2)
+	}
+
+	set idMap(1, 1) = id
+
+	// First one is right side up, so just take the first digits of the nb side ids
+	type List nbSides = Class.new("List")
+	for i = 1:1:this.tiles(id, this.NEIGHBORS).length(",") {
+		do nbSides.add(+this.tiles(id, this.NEIGHBORSIDEIDS, this.tiles(id, this.NEIGHBORS).piece(",", i)))
+	}
+
+	write nbSides,!
+
+	// Sides are a bit awkard, but 1 is up, 2 is down, 3 is left, 4 is right. We want to get this to up and right.
+	// so if nbSides contains both 1 and 4, we are fine, else we need to rotate a few times. Rotations are clockwise
+	
+	type Integer nRotations
+	
+	if nbSides.contains(1) and nbSides.contains(3) set nRotations = 1
+	if nbSides.contains(1) and nbSides.contains(4) set nRotations = 0
+	if nbSides.contains(2) and nbSides.contains(3) set nRotations = 2
+	if nbSides.contains(2) and nbSides.contains(4) set nRotations = 3
+
+	do this.setTileSidesAndTransforms(id, nRotations, false)
+
+	// TODO: Solve the rotation for the first one, as we start at 1,1 (down, left) the matchedsides need to go up en right.
+
+	type Integer nbId = 0
+	type String toMatchSide = ""
+
+	for i = 1:1:this.size {
+		for j = 1:1:this.size {
+			if (i = 1) and (j = 1) quit
+			
+			// Switched rows, look down
+			if (i = 1) {
+				set nbId = idMap(1, j - 1)
+				set toMatchSide = this.tiles(nbId, this.ROTATEDSIDE, "u")
+			}
+			else {
+				set nbId = idMap(i - 1, j)
+				set toMatchSide = this.tiles(nbId, this.ROTATEDSIDE, "r")
+			}
+		}
+	}
+
+	/* Algorithm:
+	- Take the corner that has a neighborh up en right. this is 0, 0
+	- Then go through the loop, skipping (0, 0), and always take: the one
+	  left if x > 0, or else the one below if x = 0. Then for that right or
+	  up boundary, rotate / mirror so that it fits and go to the next
+	*/
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private void setTileSidesAndTransforms(
+		  req Integer id
+		, req Integer nRotations
+		, req Integer flip
+		)
+	/* DOC ----------------------------------------------------------------
+	Add correct sides in tiles array and store the transform. We always flip
+	first and then do rotations.
+	** ENDDOC */
+
+	type String transform = ""
+
+	if (flip) set transform = "f"
+
+	type Integer i
+
+	for i = 1:1:nRotations {
+		set transform = transform_ "r"
+	}
+
+	set this.tiles(id, this.TRANSFROM) = transform
+	
+	type void curr(Integer)
+	type void next(Integer)
+	set curr("u") = 1
+	set curr("d") = 2
+	set curr("l") = 3
+	set curr("r") = 4
+
+	for i = 1:1:transform.length() {
+		if transform.extract(i) = "f" {
+			set next("u") = curr("u")
+			set next("d") = curr("d")
+			set next("l") = curr("r")
+			set next()
+		}
+	}

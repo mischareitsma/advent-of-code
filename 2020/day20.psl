@@ -1,0 +1,582 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF answers class = void(Integer) node = "day20Answers"
+	/* DOC ----------------------------------------------------------------
+	Answers for part 1 and 2
+	** ENDDOC */
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF picSize = 0 class = Integer private node = "day20" position = 1
+	/* DOC ----------------------------------------------------------------
+	The size of the picture. Either 3x3 tiles or 12x12 tiles.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF tiles class = void(void, void, String) private node = "day20Tiles"
+	/* DOC ----------------------------------------------------------------
+	Tiles array, all permutations. key is tile ID, transformation, row# and tile.
+	transformation is in the form of:
+	"n" for no flip
+	"f" for flip
+	and then 0-4 "r" for the rotations, so :
+	n, nr, nrr, nrrr, f, fr, frr, frrr
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF neighbors class = void(void, String, String) private node = "day20Neighbors"
+	/* DOC ----------------------------------------------------------------
+	Neightbors of a tile. Keys are again ID and transformation, and then
+	the directions in which there are neightbohrs, and as final key the
+	the direction ("U", "D", "L", "R"). The value is the neighbor plus
+	the transformation of that neighbor
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF sides class = void(void, void, String)  private node = "day20Sides"
+	/* DOC ----------------------------------------------------------------
+	Sides of a tile. keys are ID, transformation and direction.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF sidesToTiles class = void(void, void, String) private node = "day20sidesToTiles"
+	#PROPERTYDEF sidesToTransforms class = void(void, void, String) private node = "day20sidesToTransforms"
+	/* DOC ----------------------------------------------------------------
+	Sides to tiles, format: stt(side,id,transformation) = direction
+	Sides to transforms, format: stt(side,id,direction) = transform
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF sidesToTileIds class = void(String) private node = "day20sidesToTileIds"
+	/* DOC ----------------------------------------------------------------
+	sidesToTileIds(side)="id1,id2"
+	** ENDDOC */
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF ids = "" class = List private node = "day20ids"
+	/* DOC ----------------------------------------------------------------
+	List with all the tile IDs.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF TILESIZE = 10 class = Integer private literal
+	/* DOC ----------------------------------------------------------------
+	Size of the tiles.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF UP = "^" class = String private literal
+	#PROPERTYDEF DOWN = "v" class = String private literal
+	#PROPERTYDEF LEFT = "<" class = String private literal
+	#PROPERTYDEF RIGHT = ">" class = String private literal
+	/* DOC ----------------------------------------------------------------
+	Literals for the keys for up down left right.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF TRANSFORMATIONS = "n,nr,nrr,nrrr,f,fr,frr,frrr" class = List private literal
+	/* DOC ----------------------------------------------------------------
+	List of all the possible transformations.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 20
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final void processInput()
+	/* DOC ----------------------------------------------------------------
+	Process the inputs and calculate the answers for part 1 and 2. Lots
+	of exploratory code was written first (day20_old.psl) where we found
+	the following:
+
+	- The amount of potential neighbors equals the amount of actual
+	  neighbors, i.e.: corners only have 2 potential neighbors, sides
+	  3 and middle pieces 4.
+	- Test input gets a 3x3 picture, 9 tiles in total.
+	- Actual input gets a 12x12 pictures, 144 tiles in total.
+	- tile sizes are 10x10 for both.
+	** ENDDOC */
+
+	set this.picSize = $select(this.isTest:3, 1:12)
+
+	do this.loadTiles()
+	do this.clearInput()
+
+	// do this.printPermutations(this.ids.elementAt(1))
+
+	set this.answers(1) = 1
+
+	type Integer i, j, id, firstCorner = ""
+	for i = 1:1:this.ids.count() {
+		set id = this.ids.elementAt(i)
+		if (this.neighbors(id, "n").length(",") = 2) {
+			set this.answers(1) = this.answers(1) * id
+			if firstCorner.isNull() set firstCorner = id
+		}
+	}
+
+	type void picture(String)
+	do this.createPicture(picture(), firstCorner)
+
+	type Integer n = 0
+	type Integer iter = 0
+	type void transform(String)
+	set transform(1) = "n"
+	set transform(2) = "r"
+	set transform(3) = "r"
+	set transform(4) = "r"
+	set transform(5) = "rf"
+	set transform(6) = "r"
+	set transform(7) = "r"
+	set transform(8) = "r"
+
+	type String t
+	// type void coords(String)
+
+	type void seaMonster(String)
+	set seaMonster(1) = "                  # "
+	set seaMonster(2) = "#    ##    ##    ###"
+	set seaMonster(3) = " #  #  #  #  #  #   "
+
+	type void smCoords(String)
+
+	type Integer k = 0
+
+	type Integer l = seaMonster(1).length()
+
+	for i = 1:1:l {
+		for j = 1:1:3 {
+			if (seaMonster(j).extract(i)) = "#" {
+				set k = k + 1
+				set smCoords(k) = i_","_j
+			}
+		}
+	}
+	
+	while ((n = 0) and (iter < 8)) {
+		set iter = iter + 1
+		set t = transform(iter)
+
+		for i = 1:1:t.length() {
+			if (t.extract(i) = "r") do rotateClockwiseOnce(picture())
+			if (t.extract(i) = "f") do flip(picture())
+		}
+
+		set n = $$countSeaMonsters(picture(), smCoords(), l)
+	}
+
+
+	if n = 0 throw Class.new("Error", %ModuleName_"-E-NoSeaMonstersFound,Could not find seamonsters in any permutation of the picture")
+
+	set this.answers(2) = $$countHashes(picture()) - (n * $$countHashes(seaMonster()))
+
+
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private static Integer countHashes(req void arr(String))
+	/* DOC ----------------------------------------------------------------
+	Count all the hashes in the strings in the array.
+	** ENDDOC */
+
+	type Integer i
+	type Integer n = 0
+	for i = 1:1:arr("").order(-1) {
+		set n = n + arr(i).length("#") - 1
+	}
+
+	return n
+
+
+	// --------------------------------------------------------------------
+private static Integer countSeaMonsters(
+		  req void picture(String)
+		, req void smCoords(String)
+		, req Integer seaMonLen
+		)
+	/* DOC ----------------------------------------------------------------
+	Count sea monsters.
+	** ENDDOC */
+
+	type Integer i, j, k
+
+	type Integer n = 0
+
+	type Integer l = seaMonLen
+	type Integer len = picture(1).length()
+
+	for i = 1:1:len-2 {
+		for j = 1:1:len-l {
+			type Boolean found = true
+
+			for k = 1:1:smCoords("").order(-1) quit:'found  {
+				type Integer dx = +smCoords(k).piece(",", 1) - 1
+				type Integer dy = +smCoords(k).piece(",", 2) - 1
+				set found = (picture(i + dy).extract(j + dx) = "#")
+			}
+
+			if (found) set n = n + 1
+		}
+	}
+
+	return n
+
+
+	// --------------------------------------------------------------------
+private void loadTiles()
+	/* DOC ----------------------------------------------------------------
+	Load all the tiles.
+	** ENDDOC */
+
+	type Integer i, j, id, row
+
+	for i = 1:1:this.getInputSize() {
+		type String line = this.getInputLine(i)
+		if line.isNull() quit
+		if line.beginsWith("Tile") set id = +line.piece(" ", 2) { quit
+			do this.ids.add(id)
+			set row = 0
+		}
+
+		set row = row + 1
+		set this.tiles(id, "n", row) = line
+	}
+
+
+	for i = 1:1:this.ids.count() {
+		do this.generatePermutations(this.ids.elementAt(i))
+	}
+
+	for i = 1:1:this.ids.count() {
+		for j = 1:1:this.TRANSFORMATIONS.count() {
+			do this.generateSides(this.ids.elementAt(i), this.TRANSFORMATIONS.elementAt(j))
+		}
+	}
+
+	for i = 1:1:this.ids.count() {
+		for j = 1:1:this.TRANSFORMATIONS.count() {
+			do this.findNeighbors(this.ids.elementAt(i), this.TRANSFORMATIONS.elementAt(j))
+		}
+	}
+
+
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private void createPicture(req void picture(String), req Integer firstCorner)
+	/* DOC ----------------------------------------------------------------
+	Create picture.
+	** ENDDOC */
+
+	type void idMap(void, String)
+
+	type Boolean foundOrientation = false
+
+	type Integer i, j, k, id
+	type String transform
+
+	for i = 1:1:this.TRANSFORMATIONS.count() quit:foundOrientation  {
+		set transform = this.TRANSFORMATIONS.elementAt(i)
+		set foundOrientation = (this.neighbors(firstCorner, transform).contains(this.DOWN) and this.neighbors(firstCorner, transform).contains(this.RIGHT))
+	}
+
+	set idMap(1, 1) = firstCorner_"-"_transform
+
+	for i = 1:1:this.picSize {
+		set id = +idMap(i, 1).piece("-", 1)
+		set transform = idMap(i, 1).piece("-", 2)
+
+		// Get down side and right side
+
+		type String down = this.sides(id, transform, this.DOWN)
+		type String right = this.sides(id, transform, this.RIGHT)
+
+		type Integer other = this.sidesToTileIds(down).piece(",",1)
+		if (other = id) set other = this.sidesToTileIds(down).piece(",",2)
+		set idMap(i, 2) = other_"-"_ this.sidesToTransforms(down, other, this.UP)
+
+		if (i = this.picSize) quit // No more right side.
+
+		set other = this.sidesToTileIds(right).piece(",",1)
+		if (other = id) set other = this.sidesToTileIds(right).piece(",",2)
+		set idMap(i+1, 1) = other_"-"_ this.sidesToTransforms(right, other, this.LEFT)
+	}
+
+	for i = 2:1:this.picSize - 1 {
+		for j = 1:1:this.picSize {
+			set id = +idMap(j, i).piece("-", 1)
+			set transform = idMap(j, i).piece("-", 2)
+			type String down = this.sides(id, transform, this.DOWN)
+
+			type Integer other = this.sidesToTileIds(down).piece(",",1)
+			if (other = id) set other = this.sidesToTileIds(down).piece(",",2)
+			set idMap(j, i + 1) = other_"-"_ this.sidesToTransforms(down, other, this.UP)
+		}
+	}
+
+
+	type Integer row = 0
+
+	for i = 1:1:this.picSize {
+		for j = 2:1:this.TILESIZE-1 {
+			set row = row + 1
+			set picture(row) = ""
+			for k = 1:1:this.picSize {
+				set id = +idMap(k, i).piece("-", 1)
+				set transform = idMap(k, i).piece("-", 2)
+				set picture(row) = picture(row)_ this.tiles(id, transform, j).extract(2, this.TILESIZE - 1)
+			}
+		}
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private void findNeighbors(req Integer id, req String transform)
+	/* DOC ----------------------------------------------------------------
+	Find all neighbors of a particular tile with particular transformation.
+	** ENDDOC */
+
+	type String dir
+	for dir = this.UP, this.DOWN, this.LEFT, this.RIGHT {
+		type String side = this.sides(id, transform, dir)
+		if (this.sidesToTileIds(side).length(",") = 1) quit
+		type Integer other = this.sidesToTileIds(side).piece(",", 1)
+		if (other = id) set other = this.sidesToTileIds(side).piece(",", 2)
+
+		if this.neighbors(id, transform).exists() {
+			set this.neighbors(id, transform) = this.neighbors(id, transform)_ ","_ dir
+		}
+		else {
+			set this.neighbors(id, transform) = dir
+		}
+
+		set this.neighbors(id, transform, dir) = other_"-"_ this.sidesToTransforms(side, other, dir)
+
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private void generatePermutations(req Integer id)
+	/* DOC ----------------------------------------------------------------
+	Generate all the permutations of a tile.
+	** ENDDOC */
+
+	type void arr(String)
+
+	do this.copyToArray(arr(), id, "n")
+	do flip(arr())
+	do this.copyFromArray(arr(), id, "f")
+
+	type String s
+
+	for s = "n", "f" {
+		type Integer i
+		type Integer transform = ""
+
+		do this.copyToArray(arr(), id, s)
+
+		for i = 1:1:3 {
+			set transform = transform_"r"
+			do rotateClockwiseOnce(arr())
+			do this.copyFromArray(arr(), id, s_transform)
+		}
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private void generateSides(req Integer id, req String transform)
+	/* DOC ----------------------------------------------------------------
+	Genereate the sides for a particular tile permutation.
+	** ENDDOC */
+
+	type Integer i
+
+	type String left = ""
+	type String right = ""
+
+	for i = 1:1:this.TILESIZE {
+		set left = left_ this.tiles(id, transform, i).extract(1)
+		set right = right_ this.tiles(id, transform, i).extract(this.TILESIZE)
+	}
+
+	set this.sides(id, transform, this.UP) = this.tiles(id, transform, 1)
+	set this.sides(id, transform, this.DOWN) = this.tiles(id, transform, this.TILESIZE)
+	set this.sides(id, transform, this.LEFT) = left
+	set this.sides(id, transform, this.RIGHT) = right
+
+
+	type String d
+	for d = this.UP, this.DOWN, this.LEFT, this.RIGHT {
+		type String side = this.sides(id, transform, d)
+		set this.sidesToTiles(side, id, transform) = d
+		set this.sidesToTransforms(side, id, d) = transform
+		if not this.sidesToTileIds(side).exists() {
+			set this.sidesToTileIds(side) = id
+		}
+		else {
+			if not this.sidesToTileIds(side).contains(id) set this.sidesToTileIds(side) = this.sidesToTileIds(side)_","_ id
+		}
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private void copyToArray(void arr(String), req Integer id, req String transform)
+	/* DOC ----------------------------------------------------------------
+	Copy from the tiles to an array.
+	** ENDDOC */
+
+	type Integer i
+
+	for i = 1:1:this.TILESIZE {
+		set arr(i) = this.tiles(id, transform, i)
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private void copyFromArray(void arr(String), req Integer id, req String transform)
+	/* DOC ----------------------------------------------------------------
+	Copy from the array to tiles.
+	** ENDDOC */
+
+	type Integer i
+
+	for i = 1:1:this.TILESIZE {
+		set this.tiles(id, transform, i) = arr(i)
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private static void flip(void arr(String))
+	/* DOC ----------------------------------------------------------------
+	Flip a 2D array vertically.
+	** ENDDOC */
+
+	type Integer i
+	type Integer n = arr(1).length()
+	for i = 1:1:n {
+		set arr(i) = arr(i).reverse()
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private static void rotateClockwise(void arr(String), Integer n)
+	/* DOC ----------------------------------------------------------------
+	Rotate an array clockwise n times.
+	** ENDDOC */
+
+	set n = n.get()
+	if n.isNull() set n = 1
+
+	type Integer i
+	for i = 1:1:n {
+		do rotateClockwiseOnce(arr())
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private static void rotateClockwiseOnce(void arr(String))
+	/* DOC ----------------------------------------------------------------
+	Transpose and reverse for clockwise rotation.
+	** ENDDOC */
+
+	type void tmpArr(String)
+
+	type Integer n = arr(1).length()
+
+	type Integer i, j
+	for i = 1:1:n {
+		set tmpArr(i) = ""
+	}
+
+	for i = 1:1:n {
+		for j = 1:1:n {
+			set tmpArr(i) = tmpArr(i)_ arr(j).extract(i)
+		}
+	}
+
+	for i = 1:1:n {
+		set arr(i) = tmpArr(i).reverse()
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private void printPermutations(req String id)
+	/* DOC ----------------------------------------------------------------
+	Print all the permutations for a particular tile.
+	** ENDDOC */
+
+	type Integer i, j
+	type String t
+
+	for i = 1:1:this.TRANSFORMATIONS.count() {
+		set t = this.TRANSFORMATIONS.elementAt(i)
+
+		write "Transformation "_ t,!
+		for j = 1:1:this.TILESIZE {
+			write this.tiles(id, t, j),!
+		}
+		write !
+	}
+	quit
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Return this.answers(1)
+	** ENDDOC */
+
+	return this.answers(1)
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Return this.answers(2)
+	** ENDDOC */
+
+	return this.answers(2)
