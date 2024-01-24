@@ -44,3 +44,19 @@ public static Boolean inRange(req Integer n, req Integer min, req Integer max)
 	** ENDDOC */
 
 	return (n >= min) and (n <= max)
+
+
+	// --------------------------------------------------------------------
+public static Integer maxIntList(req List l)
+	/* DOC ----------------------------------------------------------------
+	Return the biggest number from a list of integers.
+	** ENDDOC */
+
+	type Integer max = -999999999999999999
+	type Integer i
+
+	for i = 1:1:l.count() {
+		if l.elementAt(i) > max set max = l.elementAt(i)
+	}
+	
+	return max

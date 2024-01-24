@@ -1,0 +1,220 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF answers class = void(Integer) private node = "day24"
+	/* DOC ----------------------------------------------------------------
+	Answers for part 1 and 2, a processInput will calculate them.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 24
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final void processInput()
+	/* DOC ----------------------------------------------------------------
+	Set cups and length.
+	** ENDDOC */
+
+	type literal List DIRECTIONS = "e,se,sw,w,nw,ne"
+
+	type void dx(Integer)
+	set dx("e") = 2
+	set dx("se") = 1
+	set dx("sw") = -1
+	set dx("w") = -2
+	set dx("nw") = -1
+	set dx("ne") = 1
+
+	type void dy(Integer)
+	set dy("e") = 0
+	set dy("se") = -1
+	set dy("sw") = -1
+	set dy("w") = 0
+	set dy("nw") = 1
+	set dy("ne") = 1
+
+	type Integer i, j, n
+	type Integer x, y
+
+	type void tiles(void, Integer)
+	type String d = ""
+
+	for i = 1:1:this.getInputSize() {
+		type String line = this.getInputLine(i)
+		// write line,!
+		set j = 1
+		set x = 0
+		set y = 0
+		while (j <= line.length()) {
+			set d = line.extract(j)
+			if (d = "s") or (d = "n") {
+				set j = j + 1
+				set d = d_line.extract(j)
+			}
+
+			set x = x + dx(d)
+			set y = y + dy(d)
+
+			set j = j + 1
+		}
+
+		if not tiles(x, y).exists() set tiles(x, y) = 0
+
+		set tiles(x, y) = (tiles(x, y) + 1) # 2
+	}
+
+	set x = ""
+	set y = ""
+
+	set this.answers(1) = $$pruneWhiteTiles(tiles(,))
+
+	type Integer day
+
+	for day = 1:1:100 {
+		set x = ""
+		set y = ""
+
+		type void originalTiles(void, Integer)
+		set originalTiles(,) = tiles(,)
+
+		// First add all neighborhs, as they can turn black
+		for  set x = originalTiles(x).order() quit:x.isNull()  {
+			for  set y = originalTiles(x, y).order() quit:y.isNull()  {
+				for i = 1:1:DIRECTIONS.count() {
+					set d = DIRECTIONS.elementAt(i)
+					if 'tiles(x+dx(d), y+dy(d)).exists() set tiles(x+dx(d), y+dy(d)) = 0
+				}
+			}
+		}
+
+		type void newTiles(void, Integer)
+
+		for  set x = tiles(x).order() quit:x.isNull()  {
+			for  set y = tiles(x, y).order() quit:y.isNull()  {
+
+				set n = 0
+
+				for i = 1:1:DIRECTIONS.count() {
+					set d = DIRECTIONS.elementAt(i)
+					if (tiles(x+dx(d), y+dy(d)).get(0) = 1) set n = n + 1
+				}
+
+				// if (tiles(x, y) = 1) {
+				// 	if ((n = 0) or (n > 2)) set newTiles(x, y) = 
+				// 	else set newTiles(x, y) = 1
+				// }
+
+				if (tiles(x, y) = 1) and ((n = 1) or (n = 2)) set newTiles(x, y) = 1
+				if (tiles(x, y) = 0) and (n = 2) set newTiles(x, y) = 1
+			}
+		}
+
+
+		set n = $$pruneWhiteTiles(newTiles(,))
+		set tiles(,) = newTiles(,)
+
+		if (day < 10) or (day # 10 = 0) write "Day "_ day_": "_ n,!
+	}
+
+	set this.answers(2) = n
+
+	quit
+
+	
+	// --------------------------------------------------------------------
+private static void printTiles(req void tiles(void, Integer))
+	/* DOC ----------------------------------------------------------------
+	Print tiles.
+	** ENDDOC */
+
+	type Integer xmin, xmax, ymin, ymax
+
+	set xmin = tiles("").order()
+	set xmax = tiles("").order(-1)
+
+	type Integer x, y
+	set ymax = -10000000
+	set ymin = 10000000
+
+	set x = ""
+	set y = ""
+	for  set x = tiles(x).order() quit:x.isNull()  {
+		for  set y = tiles(x, y).order() quit:y.isNull()  {
+			if y > ymax set ymax = y
+			if y < ymin set ymin = y
+		}
+	}
+
+	type String c = ""
+
+	set xmin = xmin - 2
+	set xmax = xmax + 2
+	set ymin = ymin - 2
+	set ymax = ymax + 2
+
+	for y = ymax:-1:ymin {
+		for x = xmin:1:xmax {
+			if ((x#2) '= (y#2)) set c = " "
+			else  set c = $select(tiles(x,y).exists():"#", 1:".")
+
+			write c
+		}
+		write !
+	}
+
+	write !
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public static Integer pruneWhiteTiles(req void tiles(void, Integer))
+	/* DOC ----------------------------------------------------------------
+	Prune the white tiles (those who have flipped an even number of times),
+	and return the number if black tiles left.
+	** ENDDOC */
+
+	type Integer n = 0
+	type Integer x = ""
+	type Integer y = ""
+
+	for  set x = tiles(x).order() quit:x.isNull()  {
+		for  set y = tiles(x, y).order() quit:y.isNull()  {
+			if (tiles(x,y) = 0) kill tiles(x,y)
+			else set n = n + 1
+		}
+	}
+
+	return n
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	** ENDDOC */
+
+	return this.answers(1)
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part 2
+	** ENDDOC */
+
+	return this.answers(2)

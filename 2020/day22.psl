@@ -1,0 +1,175 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF cards class = void(List) private node = "day22Cards"
+	/* DOC ----------------------------------------------------------------
+	Cards per player.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF history class = void(String) private node = "day22History"
+	/* DOC ----------------------------------------------------------------
+	History.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 22
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final void processInput()
+	/* DOC ----------------------------------------------------------------
+	Process the inputs. Create the instructions and the messages arrays.
+	** ENDDOC */
+
+	type Integer i
+	type Integer p
+
+	type String line
+
+	for i = 1:1:this.getInputSize() {
+		set line = this.getInputLine(i)
+		if line.beginsWith("Player") set p = +line.piece(" ", 2) quit
+		if line.isNull() quit
+
+		if 'this.cards(p).exists() set this.cards(p) = Class.new("List")
+		do this.cards(p).add(+line)
+	}
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private Integer playRound(
+		  req void startDecks(List)
+		, req void endDecks(List)
+		, req Boolean recursiveCombat
+		, req Integer depth
+	)
+	/* DOC ----------------------------------------------------------------
+	Play a game of Combat TM. Return the winning player number.
+	** ENDDOC */
+
+	type void history(void, String)
+
+	type List deck1 = startDecks(1)
+	type List deck2 = startDecks(2)
+
+	type Integer card1, card2, winner
+
+	type Boolean roundEnded = false
+
+	type Integer i, max1, max2
+
+	while not roundEnded {
+		if history(deck1, deck2).exists() set roundEnded = true quit
+		if history(deck2, deck1).exists() set roundEnded = true quit
+
+		set history(deck1, deck2) = ""
+		set history(deck2, deck1) = ""
+
+		set card1 = deck1.elementAt(1)
+		set card2 = deck2.elementAt(1)
+
+		set deck1 = $select(deck1.count()>1:deck1.toString().extract(deck1.toString().find(","), deck1.toString().length()).toList(), 1:"")
+		set deck2 = $select(deck2.count()>1:deck2.toString().extract(deck2.toString().find(","), deck2.toString().length()).toList(), 1:"")
+
+		if (recursiveCombat and (card1 <= deck1.count()) and (card2 <= deck2.count())) {
+			type void recurseDecks(List)
+			set max1 = 0
+			set recurseDecks(1) = Class.new("List")
+			for i = 1:1:card1 {
+				if deck1.elementAt(i) > max1 set max1 = deck1.elementAt(i)
+				do recurseDecks(1).add(deck1.elementAt(i))
+			}
+		
+			set max2 = 0
+			set recurseDecks(2) = Class.new("List")
+			for i = 1:1:card2 {
+				if deck2.elementAt(i) > max2 set max2 = deck2.elementAt(i)
+				do recurseDecks(2).add(deck2.elementAt(i))
+			}
+
+			type void ignore(List)
+
+			if (max1 > max2) and (max1 > (card1 + card2)) set winner = 1
+			else  set winner = this.playRound(recurseDecks(), ignore(), true, depth + 1)
+
+		}
+		else {
+			set winner = $select(card1>card2:1, 1:2)
+		}
+
+		if (winner = 1) {
+			do deck1.add(card1)
+			do deck1.add(card2)
+		}
+		else {
+			do deck2.add(card2)
+			do deck2.add(card1)
+		}
+
+		set roundEnded = (deck1.count() = 0) or (deck2.count() = 0)
+	}
+
+	set endDecks(1) = deck1
+	set endDecks(2) = deck2
+
+	if (roundEnded and (endDecks(1).count() > 0) and (endDecks(2).count() > 0)) return 1
+
+	return $select(endDecks(1).count():1, 1:2)
+
+
+	// --------------------------------------------------------------------
+private Integer playGame(req Boolean recursiveCombat)
+	/* DOC ----------------------------------------------------------------
+	Play the game, return the winning score.
+	** ENDDOC */
+
+	type void startDeck(List)
+	set startDeck(1) = this.cards(1)
+	set startDeck(2) = this.cards(2)
+	type void endDeck(List)
+	type Integer winner = this.playRound(startDeck(), endDeck(), recursiveCombat, 1)
+
+	type Integer i
+	type List winningDeck = endDeck(winner)
+	type Integer result = 0
+
+	for i = 1:1:winningDeck.count() {
+		set result = result + (winningDeck.elementAt(i) * (winningDeck.count() - i + 1))
+	}
+
+	return result
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	** ENDDOC */
+
+	return this.playGame(false)
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part 2
+	** ENDDOC */
+
+	return this.playGame(true)

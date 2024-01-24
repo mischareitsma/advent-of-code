@@ -1,0 +1,161 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF cups = "" class = String private node ="day23" position = 1
+	/* DOC ----------------------------------------------------------------
+	Current cups.
+	** ENDDOC */
+
+	// --------------------------------------------------------------------
+	#PROPERTYDEF nCups = 0 class = Integer private node = "day23" position = 2
+	/* DOC ----------------------------------------------------------------
+	Number of cups.
+	** ENDDOC */
+
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 23
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final void processInput()
+	/* DOC ----------------------------------------------------------------
+	Set cups and length.
+	** ENDDOC */
+
+	set this.cups = this.getInputLine(1)
+	set this.nCups = this.cups.length()
+
+	quit
+
+
+	// --------------------------------------------------------------------
+private String rounds(req Integer nRounds)
+	/* DOC ----------------------------------------------------------------
+	Run with nRounds rounds.
+	** ENDDOC */
+
+	type Integer i
+
+	type Boolean cycleFound = false
+
+	for i = 1:1:nRounds {
+		do this.round()
+	}
+
+	return this.cups
+
+
+	// --------------------------------------------------------------------
+public void round()
+	/* DOC ----------------------------------------------------------------
+	Do a round of cups.
+
+	- Get current digit (we reformat, so is extract(1))
+	- remove the next 3 (extract(2, 4))
+	- get destination digit: current digit - 1 till it is in the remainder cups
+	- add removed cups after dest cup
+	- go to next cup (so put first digit at the end)
+	** ENDDOC */
+
+	type String takenCups = this.cups.extract(2, 4)
+	type String remainingCups = this.cups.extract(1)_ this.cups.extract(5, this.nCups)
+	type Integer nextDigit = this.cups.extract(1).toInteger() - 1
+	if (nextDigit = 0) set nextDigit = this.nCups
+
+	while not remainingCups.contains(nextDigit) {
+		set nextDigit = nextDigit - 1
+		if (nextDigit = 0) set nextDigit = this.nCups
+	}
+
+	type Integer nextDigitIdx = remainingCups.find(nextDigit)
+
+	type String newCups = remainingCups.extract(1, nextDigitIdx - 1)_ takenCups
+
+	// If the find returns a number bigger than length it is the last digit.
+	if (nextDigitIdx <= (this.nCups - 3)) set newCups = newCups_ remainingCups.extract(nextDigitIdx, this.nCups - 3)
+
+	set this.cups = newCups.extract(2, this.nCups)_newCups.extract(1)
+
+	quit
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	** ENDDOC */
+
+	return this.rounds(100)
+
+
+	// --------------------------------------------------------------------
+public final String part2()
+	/* DOC ----------------------------------------------------------------
+	Solution part 2
+	** ENDDOC */
+
+	type literal Integer N = 1000000
+	type literal Integer ROUNDS = 10000000
+
+	type Integer i
+
+	set this.cups = this.getInputLine(1)
+
+	type void next(Integer)
+
+	for i = 1:1:this.nCups - 1 {
+		set next(this.cups.extract(i)) = this.cups.extract(i+1)
+	}
+	set next(this.cups.extract(this.nCups)) = this.nCups + 1
+
+	for i = this.nCups + 1:1:(N-1) {
+		set next(i) = i+1
+	}
+
+	set next(N) = this.cups.extract(1)
+
+	type Integer curr = this.cups.extract(1)
+
+	type Integer tmpNext3rd
+	type Integer tmpDest
+	type Integer dest
+
+	for i = 1:1:ROUNDS {
+
+		type List nextDigits = Class.new("List")
+		do nextDigits.add(next(curr))
+		do nextDigits.add(next(next(curr)))
+		do nextDigits.add(next(next(next(curr))))
+
+		set tmpNext3rd = next(next(next(next(curr))))
+
+		set dest = curr - 1
+		if (dest = 0) set dest = N
+
+		while (nextDigits.contains(dest)) {
+			set dest = dest - 1
+			if (dest = 0) set dest = N
+		}
+
+		set tmpDest = next(dest)
+		set next(dest) = nextDigits.elementAt(1)
+		set next(next(next(next(curr)))) = tmpDest
+		set next(curr) = tmpNext3rd
+
+		set curr = next(curr)
+	}
+
+	return next(1) * next(next(1))

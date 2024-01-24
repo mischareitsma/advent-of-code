@@ -1,0 +1,73 @@
+	#PACKAGE custom.aoc
+	#CLASSDEF public extends = AoC
+
+	// --------------------------------------------------------------------
+public static Integer pslmain(void args(String))
+	/* DOC ----------------------------------------------------------------
+	Command line entry point.
+
+	@param	args	Command line arguments
+	** ENDDOC */
+
+	set args(1) = 25
+	// set args("test") = ""
+
+	return $$pslmain^AoC(args())
+
+
+	// --------------------------------------------------------------------
+public final String part1()
+	/* DOC ----------------------------------------------------------------
+	Solution part 1.
+	** ENDDOC */
+
+	type Integer cardSubject = this.getInputLine(1)
+	type Integer doorSubject = this.getInputLine(2)
+	type Integer cardLoopSize = $$getLoopSize(cardSubject)
+	type Integer doorLoopSize = $$getLoopSize(doorSubject)
+
+	type Integer cardEncryptionKey = $$getEncryptionKey(cardSubject, doorLoopSize)
+	type Integer doorEncryptionKey = $$getEncryptionKey(doorSubject, cardLoopSize)
+
+	if (cardEncryptionKey '= doorEncryptionKey) throw Class.new("Error", %ModuleName_"-E-EncKeysNotEqual,Encryption keys "_ cardEncryptionKey_" and "_ doorEncryptionKey_ " are not equal")
+
+	return cardEncryptionKey
+
+
+	// --------------------------------------------------------------------
+private static Integer getEncryptionKey(req Integer subjectNumber, req Integer loopNumber)
+	/* DOC ----------------------------------------------------------------
+	Get the encryption key.
+	** ENDDOC */
+
+	type literal Integer DENOMINATOR = 20201227
+
+	set subjectNumber = subjectNumber # DENOMINATOR
+
+	type Integer enc = 1
+	type Integer i
+
+	for i = 1:1:loopNumber {
+		set enc = (enc * subjectNumber) # DENOMINATOR
+	}
+
+	return enc
+
+
+	// --------------------------------------------------------------------
+public static Integer getLoopSize(req Integer key)
+	/* DOC ----------------------------------------------------------------
+	** ENDDOC */
+
+	type literal Integer DENOMINATOR = 20201227
+
+	type Integer loopSize = 0
+
+	type Integer enc = 1
+
+	while (key '= enc) {
+		set loopSize = loopSize + 1
+		set enc = (enc * 7) # DENOMINATOR
+	}
+
+	return loopSize
