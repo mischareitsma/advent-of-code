@@ -1,61 +1,66 @@
 import os
+from collections import deque
 
 TEST: bool = False
 
 FILE_NAME = "day9_test_input.dat" if TEST else "day9_input.dat"
 FILE_PATH = f'{os.path.dirname(os.path.realpath(__file__))}/{FILE_NAME}'
 
-disk_map = []
+def part1():
+    dm = deque()
+    with open(FILE_NAME) as f:
+        l = f.readline().strip()
+        is_file = True
+        f_id = 0
+        for chr in l:
+            for _ in range(int(chr)):
+                dm.append(f_id if is_file else -1)
+            
+            if is_file:
+                f_id+=1
+            is_file = not is_file
 
-with open(FILE_PATH) as f:
-    l = f.readline()
-    file_id = 0
-    is_file = True
-    for chr in l.strip():
-        n = int(chr)
-        for _ in range(n):
-            disk_map.append(file_id if is_file else -1)
-        # Just to be sure, in case zero length files exist.
-        if is_file and n > 0:
-            file_id+=1
-        is_file = not is_file
+    rdm = []
 
-i = 0
-j = len(disk_map)
-
-while i <= j:
-    try:
-        if disk_map[i] == -1:
-            j -= 1
-            while disk_map[j] == -1:
-                j -= 1
-                if j == i:
+    while dm:
+        v = dm.popleft()
+        if v == -1:
+            v = -1
+            while v == -1:
+                if not dm:
                     break
-            disk_map[i] = disk_map[j]
-            disk_map[j] = -1
-        if i == j:
-            break
-        i += 1
-    except:
-        print(i)
-        print(j)
-        raise RuntimeError()
+                v = dm.pop()
+        if v != -1:
+            rdm.append(v)
 
-pt1 = 0
+    r=0
 
-for idx, val in enumerate(disk_map):
-    if val == -1:
-        break
+    for i, x in enumerate(rdm):
+        r += (i * x)
 
-    pt1 += (idx * val)
+    return r
 
-if TEST:
-    s = ''
-    for c in disk_map:
-        if c == -1:
-            s += '.'
-        else:
-            s += str(c)
+class Node:
+    def __init__(self, file_id, size, prev):
+        self.is_file: bool = (file_id != -1)
+        self.next: 'Node' = None
+        self.prev: 'Node' = prev
+        self.size: int = size
+        self.attempted: bool = False
 
-    print(s)
-print(pt1)
+def part2():
+   
+    with open(FILE_NAME) as f:
+            l = f.readline().strip()
+            is_file = True
+            f_id = 0
+            for chr in l:
+                for _ in range(int(chr)):
+                    dm.append(f_id if is_file else -1)
+                
+                if is_file:
+                    f_id+=1
+                is_file = not is_file
+print(part1())
+print(part2())
+
