@@ -1,5 +1,4 @@
 import os
-import functools
 TEST: bool = False
 
 FILE_NAME = "day11_test_input.dat" if TEST else "day11_input.dat"
@@ -27,7 +26,17 @@ def new_stones(curr) -> list[int, int]:
 # I can imagine there are loops. Some something like creating a map of next
 # digits might be good. lru cache is good as well for speed
 
-for i in range(10):
-    n = new_stones(i)
-    n2 = new_stones(n[0])
-    print(n, n2)
+curr = list(og_list)
+curr = {k: 1 for k in og_list}
+for i in range(75):
+    new = {}
+    for k, v in curr.items():
+        for ns in new_stones(k):
+            if ns not in new:
+                new[ns] = 0
+            new[ns] += v
+    curr = new
+
+    if True: #i == 24 or i == 74:
+        stones = sum(curr.values())
+        print(f'Blink {i}: {stones}')
