@@ -1,7 +1,6 @@
 import os
 TEST: bool = False
 
-
 FILE_NAME = "day17_test_input.dat" if TEST else "day17_input.dat"
 FILE_PATH = f'{os.path.dirname(os.path.realpath(__file__))}/{FILE_NAME}'
 
@@ -83,6 +82,7 @@ i = 0
 
 res = None
 
+# TODO: (Mischa Reitsma) This doesn work, probably need to reverse engineer.
 while res != pgm:
     a = i
     b = 0

@@ -37,7 +37,7 @@ export function arraysAreEqual(a, b) {
 
 
 /**
- * Generate permutations of a given input array. This is stole from
+ * Generate permutations of a given input array. This is stolen from
  * https://stackoverflow.com/questions/9960908/permutations-in-javascript
  * 
  * @param {any[]} inputArr Input array from which to generate permutations
