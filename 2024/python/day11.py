@@ -1,4 +1,5 @@
 import os
+import functools
 TEST: bool = False
 
 FILE_NAME = "day11_test_input.dat" if TEST else "day11_input.dat"

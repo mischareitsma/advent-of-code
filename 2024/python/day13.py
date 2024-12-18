@@ -13,16 +13,18 @@ class Point:
         self.y = y
 
 class Button(Point):
-    pass
+    
+    def same_slope(self, other: 'Button'):
+        return (self.y / self.x) == (other.y / other.x)
 
 class Machine:
 
     def __init__(self, bax, bay, bbx, bby, tx, ty):
-        self.a = Button(bax, bay)
-        self.b = Button(bbx, bby)
-        self.t = Point(tx, ty)
-        self.na = 0
-        self.nb = 0
+        self.a: Button = Button(bax, bay)
+        self.b: Button = Button(bbx, bby)
+        self.t: Point = Point(tx, ty)
+        self.na:int  = 0
+        self.nb:int  = 0
 
     def hit_target(self):
         return self.x() == self.t.x and self.y() == self.t.y
@@ -77,7 +79,7 @@ def get_machines_from_input():
 
 
 
-machines = get_machines_from_input()
+machines: tuple[Machine] = get_machines_from_input()
 # for m in machines:
 #     # X never reachable within 100 clicks
 #     if m.a.x * 100 < m.t.x and m.b.x * 100 < m.t.x:
@@ -110,6 +112,31 @@ for m in machines:
     m.t.x += 10000000000000
     m.t.y += 10000000000000
 
+    scores = []
+
+    denom = m.a.x * m.b.y - m.a.y * m.b.x
+    if denom == 0:
+        na = m.t.x / m.a.x
+        nb = m.t.x / m.b.x
+        if na.is_integer():
+            m.na = int(na)
+            m.nb = 0
+            if m.hit_target():
+                scores.append(3*na)
+        if nb.is_integer():
+            m.na = 0
+            m.nb = int(nb)
+            if m.hit_target():
+                scores.append(nb)
+    else:
+        na = (m.b.y * m.t.x - m.b.x * m.t.y) / denom
+        nb = (m.t.y * m.a.x - m.t.x * m.a.y) / denom
+
+        if na.is_integer() and nb.is_integer() and na >= 0 and nb >= 0:
+            scores.append(3 * int(na) + int(nb))
+
+    if scores:
+        score2 += min(scores)
 
 
 print(score1)

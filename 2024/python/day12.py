@@ -20,6 +20,13 @@ DIRS = (
     (0, -1)
 )
 
+PERP_DIRS = (
+    (0, -1),
+    (1, 0),
+    (0, 1),
+    (-1, 0)
+)
+
 def get_neighbors(x, y):
     r = []
     for d in DIRS:
@@ -86,7 +93,7 @@ def get_edges(x, y):
     # First one should always be a corner
     def get_curr_dir(_x, _y, ignore_dir):
         print(_x, _y, ignore_dir)
-        for dir in DIRS:
+        for i, dir in enumerate(DIRS):
             if dir == ignore_dir:
                 continue
             nx = _x + dir[0]
@@ -94,21 +101,27 @@ def get_edges(x, y):
             if not in_big_grid(nx, ny):
                 continue
             if BIG_MAP[ny][nx][0] == v:
-                return dir
-    curr_dir = get_curr_dir(x, y, None)
+                return dir, PERP_DIRS[i]
+    curr_dir, perp_dir = get_curr_dir(x, y, None)
     nx = x + curr_dir[0]
     ny = y + curr_dir[1]
 
     edges = 0
 
-    # TODO: Doesnt work because it just checks if the next is the same value, can also be the case that it needs to look at above and below, if above is same, then direction should change.
-    while not (nx == x and ny == y):
+    while True:
         nnx = nx + curr_dir[0]
         nny = ny + curr_dir[1]
-        # if nnx == x and nny == y:
-        #     break
-        if BIG_MAP[nny][nnx][0] != v:
-            curr_dir = get_curr_dir(nx, ny, (-curr_dir[0], -(curr_dir[1])))
+
+        pnx = nnx + perp_dir[0]
+        pny = nny + perp_dir[1]
+        if nnx == x and nny == y:
+            break
+        if in_big_grid(pnx, pny) and BIG_MAP[pny][pnx][0] == v:
+            curr_dir = perp_dir
+            perp_dir = PERP_DIRS[DIRS.index(curr_dir)]
+            edges += 1
+        elif not in_big_grid(nny, nnx) or BIG_MAP[nny][nnx][0] != v:
+            curr_dir, perp_dir = get_curr_dir(nx, ny, (-curr_dir[0], -(curr_dir[1])))
             edges += 1
         else:
             nx = nnx
@@ -130,7 +143,7 @@ for y in range(Y_MAX*3):
         processed.add(i)
         edges[i] = get_edges(x, y)
 
-
+print(edges)
 p1 = 0
 p2 = 0
 for k, v in area.items():
