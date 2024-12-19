@@ -56,15 +56,15 @@ ROTATES =  {
 # Also skip rotates if there is a wall in front after rotate, doesnt add value.
 
 scores = {
-    start: 0
+    start: (0, set())
 }
 
-paths = [(start[0], start[1], start[2], 0)]
+paths = [(start[0], start[1], start[2], 0, set())]
 
 while paths:
     new_paths = []
     for p in paths:
-        x, y, d, s = p
+        x, y, d, s, v = p
         dx, dy = DIRS[d]
 
         if grid[y+dy][x+dx] != "#":
@@ -73,26 +73,60 @@ while paths:
             ny = y + dy
             k = (nx, ny, d)
 
-            if k not in scores or scores[k] > ns:
-                new_paths.append((nx, ny, d, ns))
-                scores[k] = ns
+            if k not in scores or scores[k][0] >= ns:
+                nv = v.copy()
+                nv.add((nx, ny))
+                new_paths.append((nx, ny, d, ns, nv))
+                if k in scores and scores[k][0] == ns:
+                    for c in scores[k][1]:
+                        nv.add(c)
+                scores[k] = (ns, nv)
         
         for r in ROTATES[d]:
             rdx, rdy = DIRS[r]
             # TODO: I think just moving as well is fine, as rotates alone don't do much.
-            if grid[y+rdy][x+rdx] == ".":
-                ns = s + 1001
-                nx = x + rdx
-                ny = y + rdy
-                k = (nx, ny, r)
+            # LOL, not for part 2 (laugh)
+            if grid[y+rdy][x+rdx] == "#":
+                continue
+            ns = s + 1000 + 1
+            nx = x + rdx
+            ny = y + rdy
+            k = (nx, ny, r)
 
-                if k not in scores or scores[k] > ns:
-                    new_paths.append((nx, ny, r, ns))
-                    scores[k] = ns
+            if k not in scores or scores[k][0] >= ns:
+                nv = v.copy()
+                nv.add((nx, ny))
+                new_paths.append((nx, ny, r, ns, nv))
+                if k in scores and scores[k][0] == ns:
+                    for c in scores[k][1]:
+                        nv.add(c)
+                scores[k] = (ns, nv)
     paths = new_paths
 
-# print(scores)
 # Might be multiple ends, just take the lowest one
-print(min([scores[e] for e in ENDS if e in scores]))
+lowest = None
+score = 1E99
+for e in ENDS:
+    if e not in scores:
+        continue
+    if scores[e][0] < score:
+        score = scores[e][0]
+        lowest = e
 
-# print(score)
+scores[lowest][1].add((start[0], start[1]))
+
+def print_grid(paths):
+    for y, row in enumerate(grid):
+        for x, val in enumerate(row):
+            if (x, y) in paths:
+                print("O", end="")
+            else:
+                print(val, end="")
+        print()
+
+if TEST:
+    print_grid(scores[lowest][1])
+    print()
+
+print("part1:", scores[lowest][0])
+print("part2:", len(scores[lowest][1]))
