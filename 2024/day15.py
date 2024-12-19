@@ -13,6 +13,13 @@ DIRS = {
     "<": (-1, 0)
 }
 
+BIG_GRID_TILE = {
+    "#": "##",
+    "O": "[]",
+    ".": "..",
+    "@": "@."
+}
+
 def parse_input():
     grid = []
     grid2 = []
@@ -27,6 +34,7 @@ def parse_input():
                 moves += line
             else:
                 grid.append(list(line))
+                grid2.append([BIG_GRID_TILE[c] for c in line])
     
     return grid, grid2, moves
 
@@ -43,21 +51,22 @@ class Box:
     def __repr__(self):
         return f"({self.x}, {self.y})"
 
-def print_grid():
-    for row in grid:
+def print_grid(g):
+    for row in g:
         print(''.join(row))
 
 def print_grid2():
     for row in grid:
         print('').join(str(v) for v in row)
 
-def find_robot():
-    for y, row in enumerate(grid):
+def find_robot(g):
+    for y, row in enumerate(g):
         for x, val in enumerate(row):
             if val == "@":
                 return (x, y)
 
-robot = find_robot()
+robot = find_robot(grid)
+robot2 = find_robot(grid2)
 
 def move_robot(move):
     global robot, grid
@@ -82,10 +91,27 @@ def move_robot(move):
         n = (n[0] + dx, n[1] + dy)
         v = grid[n[1]][n[0]]
 
+def move_robot2(move):
+    global robot2, grid2
+    x, y = robot2
+    dx, dy = DIRS[move]
+
+    n = (x + dx, y + dy)
+    v = grid2[n[1]][n[0]]
+
+    if v == "#":
+        return
+    
+    if v == ".":
+        robot2 = n
+        return
+    
+    # Keep track of rows of boxes to move.
+
 for move in moves:
     move_robot(move)
+    move_robot2(move)
 
-# print_grid()
 
 part1 = 0
 
