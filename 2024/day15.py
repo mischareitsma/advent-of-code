@@ -34,7 +34,7 @@ def parse_input():
                 moves += line
             else:
                 grid.append(list(line))
-                grid2.append([BIG_GRID_TILE[c] for c in line])
+                grid2.append(list(''.join([BIG_GRID_TILE[c] for c in line])))
     
     return grid, grid2, moves
 
@@ -54,10 +54,6 @@ class Box:
 def print_grid(g):
     for row in g:
         print(''.join(row))
-
-def print_grid2():
-    for row in grid:
-        print('').join(str(v) for v in row)
 
 def find_robot(g):
     for y, row in enumerate(g):
@@ -96,28 +92,71 @@ def move_robot2(move):
     x, y = robot2
     dx, dy = DIRS[move]
 
-    n = (x + dx, y + dy)
-    v = grid2[n[1]][n[0]]
+    n = (x, y)
 
-    if v == "#":
-        return
-    
-    if v == ".":
-        robot2 = n
-        return
-    
-    # Keep track of rows of boxes to move.
+    # left-right is easy, similar to prev
+    if move in ("<", ">"):
+        while True:
+            n = (n[0] + dx, y)
+            v = grid2[n[1]][n[0]]
+            if v == "#":
+                return
+            if v == ".":
+                for xx in range(n[0], robot2[0], -dx):
+                    grid2[y][xx] = grid2[y][xx-dx]
+                grid2[y][x] = "."
+                robot2 = (robot2[0] + dx, robot2[1] + dy)
+                return
+    else:
+        coords_to_move = []
+        coords_to_move.append([(x, y, "@")])
+        while True:
+            curr_row = []
+            pc = coords_to_move[-1]
+            for c in pc:
+                n = (c[0], c[1] + dy)
+                v = grid2[n[1]][n[0]]
+                if v == ".":
+                    continue
+                if v == "#":
+                    return
+                if v == "[":
+                    curr_row.append((n[0], n[1], v))
+                    curr_row.append((n[0]+1, n[1], "]"))
+                if v == "]":
+                    curr_row.append((n[0], n[1], v))
+                    curr_row.append((n[0]-1, n[1], "["))
+            if curr_row:
+                coords_to_move.append(curr_row)
+            else:
+                while coords_to_move:
+                    cc = coords_to_move.pop()
+                    for c in cc:
+                        grid2[c[1]][c[0]] = "."
+                        grid2[c[1]+dy][c[0]] = c[2]
 
+                robot2 = (robot2[0] + dx, robot2[1] + dy)
+                return
+                
+ 
 for move in moves:
     move_robot(move)
     move_robot2(move)
 
 
 part1 = 0
+part2 = 0
 
 for y, row in enumerate(grid):
     for x, val in enumerate(row):
         if val == "O":
             part1 += 100 * y + x
 
+for y, row in enumerate(grid2):
+    for x, val in enumerate(row):
+        if val == "[":
+            part2 += 100 * y + x
+
 print(part1)
+print(part2)
+# print_grid(grid2)
