@@ -78,21 +78,54 @@ def run_pgm():
 
 print(','.join(str(i) for i in run_pgm()))
 
-i = 0
-
-res = None
-
-# TODO: (Mischa Reitsma) This doesn work, probably need to reverse engineer.
-while res != pgm:
-    a = i
+def run_pgm_in(v):
+    global a, b, c, ptr, pgm_out
+    a = v
     b = 0
     c = 0
-    i += 1
     ptr = 0
     pgm_out = []
-    res = run_pgm()
-    # print(i, res)
-    if (i % 100000 == 0):
-        print(i)
+    return run_pgm()
 
-print(i, res)
+# pwr = [0] * len(pgm)
+# print(sum([j * 8**i for i, j in enumerate(pwr)]))
+# res = run_pgm_in(pwr)
+
+# print(sum([j * 8**i for i, j in enumerate(pwr)]), res)
+
+# for d in range(len(pwr)-1):
+#     for v in range(8):
+#         pwr[-(d+1)] = v
+#         r = run_pgm_in(pwr)
+#         if r[-(d+1)] == pgm[-(d+1)]:
+#             break
+
+# print(sum([j * 8**i for i, j in enumerate(pwr)]))
+#117440
+# 37448
+#299592
+# v = 8 ** (len(pgm)-1) # l = 16, power = 15
+# p = len(pgm)-1 # p = 14
+
+# res = None
+i = 0
+# TODO: The idea is correct, but there might be more than 1 valid prev value, so need to be able to backtrack. Smells like DFS. BFS might work as well because things fail probably fast.
+while res != pgm:
+    res = run_pgm_in(v)
+    if res[p:] == pgm[p:]:
+        print("p now is:", p)
+        p -= 1
+        if p < 0:
+            raise ValueError("Oh no, p is less than zero")
+    i += 1
+    if i == 8:
+        v -= 7 * (8**p)
+        i = 0
+        p -= 1
+        if p < 0:
+            raise ValueError("Oh no, p is less than zero")
+    v += 8**p
+    # res = run_pgm_in(v)
+print(v)
+
+
