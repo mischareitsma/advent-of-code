@@ -110,22 +110,41 @@ def run_pgm_in(v):
 # res = None
 i = 0
 # TODO: The idea is correct, but there might be more than 1 valid prev value, so need to be able to backtrack. Smells like DFS. BFS might work as well because things fail probably fast.
-while res != pgm:
-    res = run_pgm_in(v)
-    if res[p:] == pgm[p:]:
-        print("p now is:", p)
-        p -= 1
-        if p < 0:
-            raise ValueError("Oh no, p is less than zero")
-    i += 1
-    if i == 8:
-        v -= 7 * (8**p)
-        i = 0
-        p -= 1
-        if p < 0:
-            raise ValueError("Oh no, p is less than zero")
-    v += 8**p
+# while res != pgm:
+#     res = run_pgm_in(v)
+#     if res[p:] == pgm[p:]:
+#         print("p now is:", p)
+#         p -= 1
+#         if p < 0:
+#             raise ValueError("Oh no, p is less than zero")
+#     i += 1
+#     if i == 8:
+#         v -= 7 * (8**p)
+#         i = 0
+#         p -= 1
+#         if p < 0:
+#             raise ValueError("Oh no, p is less than zero")
+#     v += 8**p
     # res = run_pgm_in(v)
-print(v)
+# print(v)
 
+v = 8 ** (len(pgm)-1) # l = 16, power = 15
+p = len(pgm)-1 # p = 14
+
+# kickstart with one
+solutions = [v]
+while p >= 0:
+    # print(solutions)
+    new_solutions = []
+    for s in solutions:
+        for i in range(8):
+            nv = s + i * (8 ** p)
+            res = run_pgm_in(nv)
+            if res[p:] == pgm[p:]:
+                new_solutions.append(nv)
+    solutions = new_solutions
+    p-=1
+
+# Can be more than one, lol:
+print(solutions)
 
