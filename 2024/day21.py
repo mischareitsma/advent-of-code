@@ -68,7 +68,7 @@ def shortest_number_routes(code):
         pos = target
         i += 1
 
-    return filter_shortest(routes)
+    return routes
 
 # Especially for the keypad lru_cache is usefull.
 @lru_cache
@@ -127,6 +127,20 @@ def shortest_keypad_routes(path):
 
     return routes
 
+def get_shortest_keypad(p):
+    # Need to loop later, for now not!
+    routes = ['']
+    print(p)
+    for sr in p.split("A"):
+        print(sr)
+        routes = [r + s for r in routes for s in get_shortest_subroute(sr)]
+    
+    return routes
+    
+@lru_cache
+def get_shortest_subroute(r):
+    return shortest_keypad_routes(r+"A")[0]
+
 @lru_cache
 def get_shortest_route_two_keys(k1, k2):
     dx = k2[0]-k1[0]
@@ -154,14 +168,18 @@ p2 = 0
 
 for code in [c.strip() for c in open(FILE_PATH).readlines()]:
     start_time = datetime.datetime.now()
-    snr = set(shortest_number_routes(code))
+    snr = shortest_number_routes(code)
 
     i = 1
-    skr = [x for r in snr for x in shortest_keypad_routes(r)]
+    # Filter the first one on length, as this has the suboptimal ^>^ instead of ^^> or >>^
+    skr = filter_shortest([x for r in snr for x in shortest_keypad_routes(r)])
+    print(skr)
     while i < 25:
         i+=1
         print(f"Loop {i}, time passed: {(datetime.datetime.now()-start_time).total_seconds()}, size of routes: {len(skr)}")
-        skr = [x for r in skr for x in shortest_keypad_routes(r)]
+        # skr = [x for r in skr for x in shortest_keypad_routes(r)][0:1]
+        skr = [x for r in skr for x in get_shortest_keypad(r)]
+        print(skr)
 
         if i == 2:
             shortest = 1E99
@@ -182,5 +200,6 @@ for code in [c.strip() for c in open(FILE_PATH).readlines()]:
             complexity = int(code[:-1]) * shortest
             print ("Code: ", code, ", ", shortest, "*", int(code[:-1]), "=", complexity, " - Found in: ", (datetime.datetime.now()-start_time).total_seconds())
             p2 += complexity
+    # break
 
 print(p1, p2)
