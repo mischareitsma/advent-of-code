@@ -163,6 +163,7 @@ def get_shortest_route_two_keys(k1, k2):
             routes.append(rs + "A")
 
     return routes
+
 p1 = 0
 p2 = 0
 
