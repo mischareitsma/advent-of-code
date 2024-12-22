@@ -1,5 +1,6 @@
 import os
-TEST: bool = False
+TEST: bool = True
+RUN_PT2: bool = True
 from functools import lru_cache
 from itertools import permutations
 import datetime
@@ -80,7 +81,7 @@ def get_shortest_route_two_digits(d1, d2):
     ud = abs(dy) * ("^" if dy < 0 else "v")
 
     routes = []
-    for r in set(permutations(lr+ud)):
+    for r in [lr + ud, ud + lr]:
         p = d1
         rs = ""
         for s in r:
@@ -93,8 +94,6 @@ def get_shortest_route_two_digits(d1, d2):
             routes.append(rs + "A")
 
     return routes
-    
-        
 
 """
     +---+---+
@@ -174,13 +173,13 @@ for code in [c.strip() for c in open(FILE_PATH).readlines()]:
     i = 1
     # Filter the first one on length, as this has the suboptimal ^>^ instead of ^^> or >>^
     skr = filter_shortest([x for r in snr for x in shortest_keypad_routes(r)])
-    print(skr)
+    # print(skr)
     while i < 25:
         i+=1
         print(f"Loop {i}, time passed: {(datetime.datetime.now()-start_time).total_seconds()}, size of routes: {len(skr)}")
-        # skr = [x for r in skr for x in shortest_keypad_routes(r)][0:1]
-        skr = [x for r in skr for x in get_shortest_keypad(r)]
-        print(skr)
+        skr = [x for r in skr for x in shortest_keypad_routes(r)]
+        # skr = [x for r in skr for x in get_shortest_keypad(r)]
+        # print(skr)
 
         if i == 2:
             shortest = 1E99
@@ -191,7 +190,8 @@ for code in [c.strip() for c in open(FILE_PATH).readlines()]:
             complexity = int(code[:-1]) * shortest
             print ("Code: ", code, ", ", shortest, "*", int(code[:-1]), "=", complexity, " - Found in: ", (datetime.datetime.now()-start_time).total_seconds())
             p1 += complexity
-            break
+            if not RUN_PT2:
+                break
         if i == 25:
             shortest = 1E99
             for r in skr2:
@@ -201,6 +201,5 @@ for code in [c.strip() for c in open(FILE_PATH).readlines()]:
             complexity = int(code[:-1]) * shortest
             print ("Code: ", code, ", ", shortest, "*", int(code[:-1]), "=", complexity, " - Found in: ", (datetime.datetime.now()-start_time).total_seconds())
             p2 += complexity
-    # break
 
 print(p1, p2)
