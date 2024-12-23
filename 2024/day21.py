@@ -1,6 +1,6 @@
 import os
-TEST: bool = True
-RUN_PT2: bool = True
+TEST: bool = False
+RUN_PT2: bool = False
 from functools import lru_cache
 from itertools import permutations
 import datetime
@@ -168,12 +168,13 @@ p2 = 0
 
 for code in [c.strip() for c in open(FILE_PATH).readlines()]:
     start_time = datetime.datetime.now()
-    snr = shortest_number_routes(code)
+    snr = list(set(shortest_number_routes(code)))
+    print(snr)
 
     i = 1
     # Filter the first one on length, as this has the suboptimal ^>^ instead of ^^> or >>^
     skr = filter_shortest([x for r in snr for x in shortest_keypad_routes(r)])
-    # print(skr)
+    print(skr)
     while i < 25:
         i+=1
         print(f"Loop {i}, time passed: {(datetime.datetime.now()-start_time).total_seconds()}, size of routes: {len(skr)}")

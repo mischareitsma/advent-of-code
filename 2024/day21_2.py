@@ -99,7 +99,7 @@ def get_shortest_paths(c1, c2, nope, fc):
             if p == nope:
                 break
         if len(rs) == len(cr):
-            vr.append(rs + fc)
+            vr.append(rs + "A")
     return tuple(vr)
 
 # Pre-calc all shortest paths
@@ -115,20 +115,26 @@ for v1, c1 in keypad.items():
     for v2, c2 in keypad.items():
         shortest_paths[v1+v2] = get_shortest_paths(c1, c2, keypad_illegal, "A")
 
-shortest_digit_routes = {}
+@lru_cache(maxsize=None)
+def shortest_path_length(s, depth):
+    if depth == 0:
+        return len(s)
 
-def get_shortest_route(s):
-    print(s)
-    routes = []
-    for i in range(len(s)-1):
-        print(s[i:i+2])
-        new_routes = shortest_paths[s[i:i+2]]
-        print(new_routes)
-        routes = [r + s for s in new_routes for r in routes]
-    return routes
+    pos = "a" if s.endswith("a") else "A"
+    tot = 0
 
+    for c in s:
+        tot += min(shortest_path_length(r, depth-1) for r in shortest_paths[pos+c])
+        pos = c
+    
+    return tot
+
+p1 = 0
+p2 = 0
 
 for code in [f"{c.strip()[:-1]}a" for c in open(FILE_PATH).readlines()]:
-    shortest_digit_routes[code] = get_shortest_route("a"+code)
+    p1 += int(code[:-1]) * shortest_path_length(code, 3)
+    p2 += int(code[:-1]) * shortest_path_length(code, 26)
 
-print(shortest_digit_routes)
+print(p1)
+print(p2)
