@@ -1,10 +1,11 @@
 # Sometimes it is better to start from scratch :-)
 import os
-TEST: bool = True
+TEST: bool = False
 RUN_PT2: bool = True
 from functools import lru_cache
-from itertools import permutations
-import datetime
+
+FILE_NAME = f"day21_test_input.dat" if TEST else "day21_input.dat"
+FILE_PATH = f'{os.path.dirname(os.path.realpath(__file__))}/{FILE_NAME}'
 
 """
 +---+---+---+
@@ -42,11 +43,13 @@ digit_illegal = (0, 3)
 
 keypad = {
     "^": (1, 0),
-    "a": (2, 0), 
+    "A": (2, 0), 
     "<": (0, 1),
     "v": (1, 1),
     ">": (2, 1)
 }
+
+coords = digits | keypad
 
 keypad_illegal = (0, 0)
 
@@ -103,10 +106,29 @@ def get_shortest_paths(c1, c2, nope, fc):
 shortest_paths = {}
 for v1, c1 in digits.items():
     for v2, c2 in digits.items():
+        if v1 == "A":
+            v1 = "a"
+        if v2 == "A":
+            v2 = "a"
         shortest_paths[v1+v2] = get_shortest_paths(c1, c2, digit_illegal, "a")
 for v1, c1 in keypad.items():
     for v2, c2 in keypad.items():
         shortest_paths[v1+v2] = get_shortest_paths(c1, c2, keypad_illegal, "A")
 
-for v, k in shortest_paths.items():
-    print(v, k)
+shortest_digit_routes = {}
+
+def get_shortest_route(s):
+    print(s)
+    routes = []
+    for i in range(len(s)-1):
+        print(s[i:i+2])
+        new_routes = shortest_paths[s[i:i+2]]
+        print(new_routes)
+        routes = [r + s for s in new_routes for r in routes]
+    return routes
+
+
+for code in [f"{c.strip()[:-1]}a" for c in open(FILE_PATH).readlines()]:
+    shortest_digit_routes[code] = get_shortest_route("a"+code)
+
+print(shortest_digit_routes)
