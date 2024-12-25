@@ -68,6 +68,20 @@ def get_number(gates, wires):
     return int(n, 2)
 
 def part2():
+    raise RuntimeError("This doesn't work at all :-) Too slow, did it manually. Swaps are only in full adder, so could still code it fairly easily tbh.")
+    """
+Half adder:
+
+a, b:
+  a AND b -> c_out
+  x XOR b -> sum
+
+Full Adder:
+a, b, c_in:
+    a, b HA temp_sum c_out1
+    temp_sum, c_in HA final_sum, c_out2
+    c_out1 OR c_out2 -> c_in for next Full adder
+    """
     xbin = ''.join(str(int(WIRES[_])) for _ in sorted(_ for _ in WIRES.keys() if _.startswith("x")))[::-1]
     ybin = ''.join(str(int(WIRES[_])) for _ in sorted(_ for _ in WIRES.keys() if _.startswith("x")))[::-1]
     x = int(xbin, 2)
