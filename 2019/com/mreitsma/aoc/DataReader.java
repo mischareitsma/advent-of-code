@@ -34,4 +34,8 @@ public class DataReader {
             throw new RuntimeException(iox);
         }
     }
+
+    public static List<String> readDataFromFile(String filename) {
+        return readDataFromFile(Paths.get(dataPath.toString(), filename));
+    }
 }

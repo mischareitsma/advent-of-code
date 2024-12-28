@@ -1,38 +1,32 @@
 package com.mreitsma.aoc.aoc2019.solutions;
 
+import com.mreitsma.aoc.AdventOfCode;
 import com.mreitsma.aoc.DataReader;
 
 import java.util.List;
 
-public class Day01 {
-    private static final boolean isTest = false;
+public class Day01 extends AdventOfCode {
 
-    private final List<String> input;
+    // TODO: This should be fixed, also copy/paste. Reflection is a thing I think?
+    public Day01(int day, boolean isTest) {
+        super(day, isTest);
+    }
 
     public static void main(String[] args) {
         System.out.println(System.getProperty("user.dir"));
-        new Day01().run();
+        new Day01(1, false).run();
     }
 
-    public Day01() {
-        input = isTest ? DataReader.readTestDataForDay(1) : DataReader.readDataForDay(1);
-    }
-
-    public final void run() {
-        System.out.println(part1());
-        System.out.println(part2());
-    }
-
-    public final int part1() {
-        return input.stream()
+    public final void part1() {
+        this.setPart1(input.stream()
                 .map(String::trim)
                 .map(Double::parseDouble)
                 .map((d) -> Math.floor(d/3) - 2)
-                .mapToInt(Double::intValue).sum();
+                .mapToInt(Double::intValue).sum());
     }
 
-    public final int part2() {
-        return input.stream()
+    public final void part2() {
+        this.setPart2(input.stream()
                 .map(String::trim)
                 .map(Double::parseDouble)
                 .map((d) -> {
@@ -44,6 +38,6 @@ public class Day01 {
                     }
                     return tot;
                 })
-                .mapToInt(Double::intValue).sum();
+                .mapToInt(Double::intValue).sum());
     }
 }

@@ -1,23 +1,36 @@
 package com.mreitsma.aoc.aoc2019.solutions;
 
+import com.mreitsma.aoc.AdventOfCode;
 import com.mreitsma.aoc.DataConverter;
 import com.mreitsma.aoc.DataReader;
 
-public class Day02 {
-    private final boolean isTest = false;
+public class Day02 extends AdventOfCode {
     private int[] pgm;
     public static void main(String[] args) {
-        new Day02().run();
+        new Day02(2, false).run();
     }
 
-    public void run() {
-        pgm = DataConverter.stringToIntArray((isTest? DataReader.readTestDataForDay(2) : DataReader.readDataForDay(2)).getFirst(), ",");
-        System.out.println("Part 1: " + runProgram(12, 2));
+    public Day02(int day, boolean isTest) {
+        super(day, isTest);
+    }
+
+    @Override
+    protected final void processInput() {
+        this.pgm = DataConverter.stringToIntArray(input.getFirst(), ",");
+    }
+
+    @Override
+    protected final void part1() {
+        setPart1(runProgram(12, 2));
+    }
+
+    @Override
+    protected final void part2() {
         final int target = 19690720;
         for (int noun = 0; noun <= 99; noun++) {
             for (int verb = 0; verb <= 99; verb++) {
                 if (runProgram(noun, verb) == target) {
-                    System.out.println("Part 2: " + (100 * noun + verb));
+                    setPart2(100 * noun + verb);
                     return;
                 }
             }
