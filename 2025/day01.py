@@ -21,6 +21,9 @@ N, P = info_from_args()
 FILE_NAME = f"day{DAY}{"_test" if TEST else ""}_input{N}.dat"
 FILE_PATH = f'{os.path.dirname(os.path.realpath(__file__))}/{FILE_NAME}'
 
+with open(FILE_PATH, "r") as f:
+    LINES: tuple[str, ...] = tuple(_.strip() for _ in f.readlines())
+
 def print_msg():
     msg: str = f"Running day {int(DAY)}"
     if P > 0:
@@ -31,14 +34,39 @@ def print_msg():
     print(msg)
     print(f"Input file used for solution: {FILE_NAME}")
 
+p1: int = 0
+p2: int = 0
+
+def common():
+    global p1
+    global p2
+    c = 50
+
+    for r in LINES:
+        d = -1 if r[0] == "L" else 1
+
+        for _ in range(int(r[1:])):
+            c += d
+
+            if c == -1:
+                c = 99
+            if c == 100:
+                c = 0
+
+            if c == 0:
+                p2 += 1
+        if c == 0:
+            p1 += 1
+
 def part1():
-    pass
+    return p1
 
 def part2():
-    pass
+    return p2
 
 if __name__ == "__main__":
     print_msg()
+    common()
     if P in (0, 1):
         print(f"part 1: {part1()}")
     if P in (0, 2):
