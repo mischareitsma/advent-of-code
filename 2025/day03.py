@@ -24,10 +24,6 @@ FILE_PATH = f'{os.path.dirname(os.path.realpath(__file__))}/{FILE_NAME}'
 with open(FILE_PATH, "r") as f:
     LINES: tuple[str, ...] = tuple(_.strip() for _ in f.readlines())
 
-RANGES = tuple(
-    tuple(int(i) for i in r.split("-")) for r in LINES[0].split(",")
-)
-
 def print_msg():
     msg: str = f"Running day {int(DAY)}"
     if P > 0:
@@ -41,35 +37,32 @@ def print_msg():
 def common():
     pass
 
-def part1():
+def get_biggest(ints: str, start: int, end: int):
+    p = 0
+    b = 0
+    for i, v in enumerate(ints[start:end]):
+        v = int(v)
+        if v > b:
+            b = v
+            p = i
+    return start + p, b
+
+def get_jolt(l: int):
     s = 0
-    for low, high in RANGES:
-        c = low - 1
-        while c < high:
-            c += 1
-            sc = str(c)
-            if len(sc) % 2 != 0:
-                # Even know you ned to go from 100 to 1010 straight away.
-                # Can even do it way smarter and cut it up in two digits already
-                c = 10 ** len(sc)
-                continue
-            if sc[0:int(len(sc)/2)] == sc[int(len(sc)/2):]:
-                s += c
+    for bank in LINES:
+        j = 0
+        p = -1
+        for n in range(l):
+            p, d = get_biggest(bank, p + 1, len(bank) - l + n + 1)
+            j = j * 10 + d
+        s += j
     return s
 
+def part1():
+    return get_jolt(2)
+
 def part2():
-    s = 0
-    for l, h in RANGES:
-        c = l - 1
-        while c < h:
-            c += 1
-            cs = str(c)
-            cl = len(cs)
-            for n in range(1, int(cl/2)+1):
-                if len(set(cs[i:i+n] for i in range(0, cl, n))) == 1:
-                    s += c
-                    break
-    return s
+    return get_jolt(12)
 
 if __name__ == "__main__":
     print_msg()
