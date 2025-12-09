@@ -1,4 +1,6 @@
 import dataclasses
+import multiprocessing
+import itertools
 import os
 import sys
 
@@ -65,6 +67,9 @@ class Line:
                     max(p1.y, p2.y) + 1
                 )
             )
+            
+            self.lower = p1 if p1.y < p2.y else p2
+            self.upper = p1 if p1.y > p2.y else p2
 
         if self.is_horizontal():
             self.points = tuple(
@@ -73,18 +78,33 @@ class Line:
                     max(p1.x, p2.x) + 1
                 )
             )
+            
+            self.left = p1 if p1.x < p2.x else p2
+            self.right = p1 if p1.x > p2.x else p2
 
     def is_horizontal(self):
-        return self.p1.x == self.p2.x
-    
-    def is_vertical(self):
         return self.p1.y == self.p2.y
-    
+
+    def is_vertical(self):
+        return self.p1.x == self.p2.x
+
+    def is_end(self, p: Point):
+        return p == self.p1 or p == self.p2
+
     def __hash__(self):
         return hash((self.p1, self.p2))
 
 # POINTS=tuple((int(_.split(",")[0]), int(_.split(",")[1])) for _ in LINES)
 POINTS=tuple(Point(int(_.split(",")[0]), int(_.split(",")[1])) for _ in FILE_LINES)
+LINES = tuple(
+    Line(POINTS[i], POINTS[(i+1)%len(POINTS)]) for i in range(len(POINTS))
+)
+PL: dict[Point, list[Line]] = {}
+for line in LINES:
+    for point in line.points:
+        if point not in PL:
+            PL[point] = []
+        PL[point].append(line)
 
 def common():
     pass
@@ -97,45 +117,111 @@ def part1():
 
     return max(areas.values())
 
+
+
+def get_valid_area(points: tuple[Point, Point]):
+    p1, p2, pl = points
+    return get_area(p1, p2, pl)
+
+def get_area(p1, p2, pl):
+    xmin = min(p1.x, p2.x)
+    xmax = max(p1.x, p2.x)
+    ymin = min(p1.y, p2.y)
+    ymax = max(p1.y, p2.y)
+
+    corners = (
+        Point(xmin, ymin),
+        Point(xmax, ymin),
+        Point(xmax, ymax),
+        Point(xmin, ymax)
+    )
+
+    if len(set(corners)) == 2:
+        return (xmax - xmin + 1) * (ymax - ymin + 1)
+
+    low = Line(corners[0], corners[1])
+    right = Line(corners[1], corners[2])
+    up = Line(corners[2], corners[3])
+    left = Line(corners[3], corners[0])
+
+    for p in low.points:
+        if p in corners:
+            continue
+        if p not in pl:
+            continue
+        for line in pl[p]:
+            if line.is_horizontal():
+                continue
+            
+            # Vertical only here
+            if not line.is_end(p):
+                return 0
+
+            # Is end here
+            if p != line.upper:
+                return 0
+
+    for p in right.points:
+        if p in corners:
+            continue
+        if p not in pl:
+            continue
+        for line in pl[p]:
+            # Could even jump to end of vertical line or max?
+            if line.is_vertical():
+                continue
+            
+            # Horizontal only here
+            if not line.is_end(p):
+                return 0
+
+            # Is end here
+            if p != line.left:
+                return 0
+
+    for p in up.points:
+        if p in corners:
+            continue
+        if p not in pl:
+            continue
+        for line in pl[p]:
+            if line.is_horizontal():
+                continue
+            
+            # Vertical only here
+            if not line.is_end(p):
+                return 0
+
+            # Is end here
+            if p != line.lower:
+                return 0
+
+    for p in left.points:
+        if p in corners:
+            continue
+        if p not in pl:
+            continue
+        for line in pl[p]:
+            if line.is_vertical():
+                continue
+            
+            # Horizontal only here
+            if not line.is_end(p):
+                return 0
+
+            # Is end here
+            if p != line.right:
+                return 0
+
+    return len(low.points)*len(right.points)
+
 def part2():
-    vertical_lines: list[Line] = []
-    horizontal_lines: list[Line] = []
-
-    for i, p in enumerate(POINTS):
-        p2 = POINTS[(i+1)%len(POINTS)]
-        line = Line(p, p2)
-        if line.is_horizontal():
-            horizontal_lines.append(line)
-        else:
-            vertical_lines.append(line)
-
-    xmin = min(p.x for p in POINTS) - 2
-    xmax = max(p.x for p in POINTS) + 2
-    ymin = min(p.y for p in POINTS) - 2
-    ymax = max(p.y for p in POINTS) + 2
-
-    print("Created lines")
-    print(f"xmin, xmax: {xmin}, {xmax} - ymin, ymax: {ymin} {ymax}")
-
-    xc = {}
-    yc = {}
-
-    # Just need to go through all points in all lines, can build it from there.
-    for x in range(xmin, xmax):
-        xc[x] = set()
-        for y in range(ymin, ymax):
-            for line in horizontal_lines:
-                if Point(x, y) in line.points:
-                    xc[x].add(y)
     
-    for y in range(ymin, ymax):
-        yc[y] = set()
-        for x in range(xmin, xmax):
-            for line in vertical_lines:
-                if Point(x, y) in line.points:
-                    yc[y].add(x)
+    with multiprocessing.Pool(10) as p:
+        valid_areas = p.map(get_valid_area, ((p1, p2, PL) for p1, p2 in itertools.combinations(POINTS, 2)))
 
-    print("done")
+    return max(valid_areas)
+
 
 if __name__ == "__main__":
     print_msg()
