@@ -1,8 +1,7 @@
 import dataclasses
 import os
 import sys
-from sympy import Symbol
-# import sympy
+from z3 import *
 
 TEST: bool = "-t" in sys.argv
 DAY: str = os.path.basename(__file__)[3:5]
@@ -79,27 +78,6 @@ def min_buttons_lights(m: Machine):
 
     return len(states[m.lights])
 
-def min_buttons_joltage(m: Machine):
-    constraints = [
-        [] for _ in m.joltage
-    ]
-
-    for i, b in enumerate(m.buttons):
-        for p in b:
-            constraints[p].append(i)
-
-
-    symbols = [
-        Symbol(f"x{i}", real=True, is_positive=True, integer=True)
-        for i in range(len(m.buttons))
-    ]
-    equations = [
-        
-    ]
-
-
-    return
-
 def common():
     pass
 
@@ -107,9 +85,36 @@ def part1():
     return sum(map(min_buttons_lights, MACHINES))
 
 def part2():
+    total = 0
     for m in MACHINES:
-        min_buttons_joltage(m)
-    # return sum(map(min_buttons_joltage, MACHINES))
+        solver = Solver()
+
+        # x_i = the number of times a button is pressed, these are the
+        # variables in our equation.
+        variables = [Int(f"x{i}") for i in range(len(m.buttons))]
+        # 0 or more presses per button
+        for xi in variables:
+            solver.add(xi >= 0)
+
+        # The sum of variables that represents the buttons that affect
+        # a particular joltage should equal the joltage.
+        for i, v in enumerate(m.joltage):
+            buttons = []
+            for j, b in enumerate(m.buttons):
+                if i in b:
+                    buttons.append(variables[j])
+            solver.add(sum(buttons) == v)
+
+        while solver.check() == sat:
+            model = solver.model()
+            button_presses = sum(model[n].as_long() for n in model)
+
+            # Could have a more optimal solution, so keep on trying
+            # to solve and keep on adding constraints
+            solver.add(sum(variables) < button_presses)
+
+        total += button_presses
+    return total
 
 if __name__ == "__main__":
     print_msg()
